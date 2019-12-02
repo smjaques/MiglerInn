@@ -2,8 +2,9 @@ package ui;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
-import db.Database;
+import db.*;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -36,12 +37,13 @@ public class InnReservations extends Application{
 		login.setPrefSize(400,500);
 		
 		Label title = new Label("The Migler Inn");
-		title.setLayoutX(100);
-		title.setStyle("-fx-font: 25 cambria; -fx-text-fill: darkolivegreen");
+		title.setLayoutX(80);
+		title.setLayoutY(20);
+		title.setStyle("-fx-font: 40 serif; -fx-text-fill: darkolivegreen");
 		
 		Label welcome = new Label("Enter login credentials");
-		welcome.setStyle("-fx-font: 16 cambria; -fx-text-fill: darkolivegreen");
-		welcome.setLayoutX(110);
+		welcome.setStyle("-fx-font: 16 serif; -fx-text-fill: darkolivegreen");
+		welcome.setLayoutX(120);
 		welcome.setLayoutY(160);
 		
 		TextField username = new TextField("Username");
@@ -102,11 +104,16 @@ public class InnReservations extends Application{
 		right.setPrefSize(400, 500);
 		
 		//display reservations for today on right pane
+		Text today = new Text(40,50, "Today's Reservations");
+		today.setFill(Color.DARKOLIVEGREEN);
+		today.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 32.0));
+		
         LocalDate localDate = LocalDate.now();
         String res = DB.getTodayRes(localDate);
         Label curRes = new Label(res);
-        curRes.setLayoutY(60);
-		right.getChildren().add(curRes);
+        curRes.setFont(Font.font(String.valueOf(java.awt.Font.SERIF)));
+        curRes.setLayoutY(70);
+		right.getChildren().addAll(curRes,today);
 		
 		SplitPane split = new SplitPane();
 		split.getItems().setAll(left,right);
@@ -118,17 +125,16 @@ public class InnReservations extends Application{
 
 		Pane root = new Pane();
 		Text welcome = new Text(140, 50, "Welcome to the Migler Inn");
-		
 		welcome.setFill(Color.DARKOLIVEGREEN);
-		welcome.setFont(Font.font(String.valueOf(java.awt.Font.BOLD), 40.0));
+		welcome.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 45.0));
 		root.getChildren().add(welcome);
 		screen.getChildren().add(root);
 		
 		//logout button
 		Button logout = new Button("Logout");
-		final String HOVERED_BUTTON_STYLE = "-fx-font: 12 cambria; -fx-background-color: darkolivegreen; -fx-text-fill: white;";
-		final String IDLE_BUTTON_STYLE = "-fx-font: 11 cambria; -fx-background-color: darkolivegreen; -fx-text-fill: black;";
-		logout.setStyle("-fx-font: 11 cambria; -fx-background-color: darkolivegreen; -fx-text-fill: black;");
+		final String HOVERED_BUTTON_STYLE = "-fx-font: 12 serif; -fx-background-color: darkolivegreen; -fx-text-fill: white;";
+		final String IDLE_BUTTON_STYLE = "-fx-font: 11 serif; -fx-background-color: darkolivegreen; -fx-text-fill: black;";
+		logout.setStyle(IDLE_BUTTON_STYLE);
 		logout.setLayoutX(350);
 		logout.setOnMouseEntered(e -> logout.setStyle(HOVERED_BUTTON_STYLE));
 		logout.setOnMouseExited(e -> logout.setStyle(IDLE_BUTTON_STYLE));
@@ -146,9 +152,9 @@ public class InnReservations extends Application{
 		//ROOMS: list of rooms and their rate
 		//sorted by popularity
 		Button rooms = new Button("See Rooms");
-		rooms.setStyle("-fx-font: 15 cambria; -fx-background-color: white; -fx-text-fill: darkgreen;");
-		String roomsIdle = "-fx-font: 15 cambria; -fx-background-color: white; -fx-text-fill: darkgreen;";
-		String roomsHover = "-fx-font: 15 cambria; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		String roomsIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		String roomsHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		rooms.setStyle(roomsIdle);
 		rooms.setOnMouseEntered(e -> rooms.setStyle(roomsHover));
 		rooms.setOnMouseExited(e -> rooms.setStyle(roomsIdle));
 		rooms.setLayoutX(140);
@@ -164,8 +170,8 @@ public class InnReservations extends Application{
 		
 		//NEW RESERVATION: user fills in form for new reservation
 		Button newRes = new Button("New Reservation");
-		String newResIdle = "-fx-font: 15 cambria; -fx-background-color: white; -fx-text-fill: darkgreen;";
-		String newResHover = "-fx-font: 15 cambria; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		String newResIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		String newResHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
 		newRes.setStyle(newResIdle);
 		newRes.setOnMouseEntered(e -> newRes.setStyle(newResHover));
 		newRes.setOnMouseExited(e -> newRes.setStyle(newResIdle));
@@ -214,14 +220,14 @@ public class InnReservations extends Application{
 		Pane root = new Pane();
 		Text welcome = new Text(140, 50, "Welcome to the Migler Inn");
 		welcome.setFill(Color.DARKOLIVEGREEN);
-		welcome.setFont(Font.font(String.valueOf(java.awt.Font.BOLD), 40.0));
+		welcome.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 40.0));
 		root.getChildren().add(welcome);
 		screen.getChildren().add(root);
 		
 		//"New Reservation"
-		Text resMsg = new Text(51, 60, "New Reservation");
+		Text resMsg = new Text(65, 63, "New Reservation");
 		resMsg.setFill(Color.WHITE);
-		resMsg.setFont(Font.font(String.valueOf(java.awt.Font.ITALIC), 35.0));
+		resMsg.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 35.0));
 		
 		
 		//Firstname
@@ -304,9 +310,9 @@ public class InnReservations extends Application{
 		
 		//cancel
 		Button cancel = new Button("Cancel");
-		String cancelIdle = "-fx-font: 15 cambria; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		String cancelIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
 		cancel.setStyle(cancelIdle);
-		String cancelHover = "-fx-font: 15 cambria; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		String cancelHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
 		cancel.setOnMouseEntered(e -> cancel.setStyle(cancelHover));
 		cancel.setOnMouseExited(e -> cancel.setStyle(cancelIdle));
 		cancel.setLayoutX(220);
@@ -319,14 +325,20 @@ public class InnReservations extends Application{
 			}
 		});
 		
+		Label AvailRooms = new Label("Available Rooms:");
+		AvailRooms.setLayoutX(100);
+		Label rooms = new Label("");
+		rooms.setLayoutX(60);
+		rooms.setLayoutY(80);
+		
 		//Submit
-		Button submit = new Button("Submit");
-		String submitIdle = "-fx-font: 14 cambria; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		Button submit = new Button("Show Available Rooms");
+		String submitIdle = "-fx-font: 14 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
 		submit.setStyle(submitIdle);
-		String submitHover = "-fx-font: 14 cambria; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		String submitHover = "-fx-font: 14 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
 		submit.setOnMouseEntered(e -> submit.setStyle(submitHover));
 		submit.setOnMouseExited(e -> submit.setStyle(submitIdle));
-		submit.setLayoutX(70);
+		submit.setLayoutX(30);
 		submit.setLayoutY(400);
 		submit.setOnAction(new EventHandler<ActionEvent>() {
 			
@@ -342,13 +354,36 @@ public class InnReservations extends Application{
 				//checkin and checkout are above
 				String adults = numAdults.getText();
 				String kids = numKids.getText();
-				confirmationPage(primaryStage,fname,lname,code,bed,checkin,checkout,adults,kids);
+				
+				int Y = 100;
+				
+				ArrayList<String> res = DB.getAvailRooms(code,bed,checkin,checkout,Integer.parseInt(adults+kids));
+				for(String r : res) {
+					Button option = new Button(r);
+					option.setLayoutX(200);
+					option.setLayoutY(Y);
+					Y += 20;
+					right.getChildren().add(option);
+					
+					//set event where if clicked, sends info to confirmation page!
+					option.setOnAction(new EventHandler<ActionEvent>() {
+						
+						@Override
+						public void handle(ActionEvent event) {
+							//have global list of usernames,passwords. Use this one to sign in.
+							String picked = option.getText();
+							confirmationPage(primaryStage,fname,lname,code,bed,checkin,checkout,adults,kids,picked);
+						}
+					});
+					
+				}
 			}
 		});
 	
 		
 		left.getChildren().addAll(resMsg,cancel,fName,lName,rCode,bedType,arrival,departure,numKids,numAdults,
 				submit);
+		right.getChildren().addAll(AvailRooms,rooms);
 	
 		primaryStage.setScene(new Scene(screen));
 		primaryStage.setTitle("Migler Inn");
@@ -361,7 +396,7 @@ public class InnReservations extends Application{
 	//New Reservation Confirmation Page
 	public void confirmationPage(Stage primaryStage,String fname,String lname, String code, String bed, 
 			LocalDate checkin, LocalDate checkout,
-			String adults, String kids) {
+			String adults, String kids, String roomOption) {
 		
 		
 		GridPane screen = new GridPane();
@@ -385,7 +420,7 @@ public class InnReservations extends Application{
 		Text welcome = new Text(140, 50, "Welcome to the Migler Inn");
 		
 		welcome.setFill(Color.DARKOLIVEGREEN);
-		welcome.setFont(Font.font(String.valueOf(java.awt.Font.BOLD), 40.0));
+		welcome.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 40.0));
 		root.getChildren().add(welcome);
 		screen.getChildren().add(root);
 		
@@ -406,12 +441,15 @@ public class InnReservations extends Application{
 				loginScreen(primaryStage);
 			}
 		});
+
 		
+
 		//Check validity of reservation
-		Boolean valid = DB.checkNewRes(LocalDate.now(), code);
+		Boolean valid = DB.checkNewRes(Integer.parseInt(adults+kids),LocalDate.now(), code);
 		Text resMsg = new Text(80, 60, "Confirmation");
 		resMsg.setFill(Color.WHITE);
-		resMsg.setFont(Font.font(String.valueOf(java.awt.Font.ITALIC), 35.0));
+		resMsg.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 35.0));
+		
 		
 		if(valid) {
 			//"Confirmation"
@@ -421,30 +459,90 @@ public class InnReservations extends Application{
 					+ "\n\n	Checkout Date: " + String.valueOf(checkout)
 					+ "\n\n	Adults: " + adults + "\n\n	Kids: " + kids;
 			Label confirm = new Label(details);
-			confirm.setStyle("-fx-font: 12 cambria; -fx-text-fill: white;");
+			confirm.setStyle("-fx-font: 12 serif; -fx-text-fill: white;");
 			confirm.setLayoutY(100);
 			confirm.setLayoutX(80);
 			
-			Button con = new Button("Confirm");
-			String conIdle = "-fx-font: 15 cambria; -fx-background-color: white; -fx-text-fill: darkgreen;";
-			String conHover = "-fx-font: 15 cambria; -fx-background-color: lightgrey; -fx-text-fill: black;";
+			Button con = new Button("Book Reservation");
+			String conIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+			String conHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
 			con.setStyle(conIdle);
 			con.setOnMouseEntered(e -> con.setStyle(conHover));
 			con.setOnMouseExited(e -> con.setStyle(conIdle));
-			con.setLayoutX(50);
-			con.setLayoutY(200);
+			con.setLayoutX(70);
+			con.setLayoutY(400);
+			con.setOnAction(new EventHandler<ActionEvent>() {
+				
+				@Override
+				public void handle(ActionEvent event) {
+					//have global list of usernames,passwords. Use this one to sign in.
+					mainMenu(primaryStage);
+				}
+			});
+			
+			
+			//back to main menu button
+			Button backToMain = new Button("< Back to Main Menu");
+			backToMain.setMaxHeight(12);
+			final String backHover = "-fx-font: 11 serif; -fx-background-color: darkolivegreen; -fx-text-fill: white;";
+			final String backIdle = "-fx-font: 11 serif; -fx-background-color: darkolivegreen; -fx-text-fill: black";
+			backToMain.setStyle(backIdle);
+			backToMain.setOnMouseEntered(e -> backToMain.setStyle(backHover));
+			backToMain.setOnMouseExited(e -> backToMain.setStyle(backIdle));
+			backToMain.setOnAction(new EventHandler<ActionEvent>() {
+				
+				@Override
+				public void handle(ActionEvent event) {
+					mainMenu(primaryStage);
+				}
+			});
+			
+			
+			//cancel
+			Button cancel = new Button("Cancel");
+			String cancelIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+			cancel.setStyle(cancelIdle);
+			String cancelHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+			cancel.setOnMouseEntered(e -> cancel.setStyle(cancelHover));
+			cancel.setOnMouseExited(e -> cancel.setStyle(cancelIdle));
+			cancel.setLayoutX(230);
+			cancel.setLayoutY(400);
+			cancel.setOnAction(new EventHandler<ActionEvent>() {
+				
+				@Override
+				public void handle(ActionEvent event) {
+					mainMenu(primaryStage);
+				}
+			});
 			
 			
 			
-			left.getChildren().addAll(confirm,con);
+			left.getChildren().addAll(confirm,con,cancel,backToMain);
 		
 			//First Name
 		} else {
 			//"Error: can't make Reservation"
 			resMsg = new Text(20, 60, "Error: Unable to Make Reservation");
 			resMsg.setFill(Color.WHITE);
-			resMsg.setFont(Font.font(String.valueOf(java.awt.Font.ITALIC), 35.0));
+			resMsg.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 22.0));
+			resMsg.setLayoutX(20);
 			
+			Button tryAgain = new Button("Try Again");
+			String tryAgainIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+			tryAgain.setStyle(tryAgainIdle);
+			String tryAgainHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+			tryAgain.setOnMouseEntered(e -> tryAgain.setStyle(tryAgainHover));
+			tryAgain.setOnMouseExited(e -> tryAgain.setStyle(tryAgainIdle));
+			tryAgain.setLayoutX(150);
+			tryAgain.setLayoutY(200);
+			tryAgain.setOnAction(new EventHandler<ActionEvent>() {
+				
+				@Override
+				public void handle(ActionEvent event) {
+					newReservation(primaryStage);
+				}
+			});
+			left.getChildren().addAll(tryAgain);
 		}
 		
 		left.getChildren().addAll(resMsg);
@@ -454,12 +552,7 @@ public class InnReservations extends Application{
 		primaryStage.show();
 		
 	
-//		
-//		//back to main menu button
-//		Button backToMain = new Button("< Back to Main Menu");
-//		backToMain.setMaxHeight(12);
-//		backToMain.setStyle("-fx-font: 11 cambria; -fx-background-color: darkolivegreen; -fx-text-fill: black");
-//		left.getChildren().add(backToMain);
+
 		
 		
 		
@@ -469,20 +562,6 @@ public class InnReservations extends Application{
 		
 
 
-
-
-	
-	
-	
-//	Button btn = new Button();
-//	btn.setText("Say 'Hello World'");
-//	btn.setOnAction(new EventHandler<ActionEvent>() {
-//		
-//		@Override
-//		public void handle(ActionEvent event) {
-//			System.out.println("Hello World!");
-//		}
-//	});
 	
 	
 	

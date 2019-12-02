@@ -147,11 +147,23 @@ public class Database {
  		}
  	}
  	
+ 	//getAvailRooms()				 :  gets list of available rooms
+ 	//Parameters: Info from new res page
+ 	public ArrayList<String> getAvailRooms(String code,String bed, LocalDate checkin, LocalDate checkout,int occ) {
+ 		//returns int of number of rooms found, if less than 5, call to get another method for 5 suggestions
+ 		ArrayList<String> rooms = new ArrayList<>();
+ 		rooms.add("Honeymoon suite");
+ 		rooms.add("Two Bedroom Modern");
+ 		return rooms;
+ 	
+ 	}
+ 	
  	
  	//checkNewRes()					 :  checks validity of reservation
  	//Parameters: Date,RoomCode
- 	public boolean checkNewRes(LocalDate date, String roomCode) {
+ 	public boolean checkNewRes(int occupancy, LocalDate date, String roomCode) {
  		//returns boolean if reservation is valid
+ 		//valid if occupancy is ok and dates don't overlap
  		return true;
  	}
  	
