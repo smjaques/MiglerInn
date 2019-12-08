@@ -18,6 +18,7 @@ import java.security.NoSuchAlgorithmException;
 public class Database {
  	private static Connection con;
  	private static boolean hashTables;
+ 	private int MaxOccupancy;
  	
 
  	//getconnection()  		 :  connects to database*
@@ -33,31 +34,6 @@ public class Database {
  		//con.close();
  	}
  	
- 	//getDatabaseMetaData()  :  prints all database columns and values
- 	 public static void getDatabaseMetaData() throws SQLException {
- 		 //example of how to print db 
- 		DatabaseMetaData dbmd = con.getMetaData();
- 		Statement stmt = con.createStatement();
- 		String[] types = {"TABLE"};
- 		ResultSet rs = dbmd.getTables(null, null, "%", types);
- 		ArrayList<String> tableNames = new ArrayList<>();
- 		while(rs.next())
- 			tableNames.add(rs.getString("TABLE_NAME"));
- 		//print BlockLists
- 		System.out.println(tableNames.get(0));
- 		ResultSet res = stmt.executeQuery("SELECT * FROM BlockLists");
- 		//print column values
- 		System.out.println("BlockID     BlockName");
- 		while (res.next()) {
- 			int blockid = res.getInt("BlockID");
- 			String blockname = res.getString("BlockName");
- 			System.out.println(blockid + "          " + blockname);
- 		    }
-
- 	 }
-
-
-
  	//createTable()			 :  creates all database tables (only needs to be called if tables don't exist)
  	public static void createTables(){
  		if(!hashTables) {
@@ -105,6 +81,7 @@ public class Database {
  		hashTables = true;
  	}
 
+ 	
  	//restartDB()			 :  wipe and delete all database tables (cannot be undone)
  	public static void restartDB() {
  		try (Statement state = con.createStatement()){
@@ -117,6 +94,7 @@ public class Database {
  		}
  	}
  	
+ 	
  	//get all reservations today
  	public String getTodayRes(LocalDate today) {
  		return "	First Name		Last Name 			RoomCode\n\n"
@@ -126,79 +104,75 @@ public class Database {
  				+ "	Rafi				Cohn-Gruenwald		AAD\n";
  		//return in a way where we can display in label with javafx?
  	}
-
-	//add new reservation
- 	public static void newReservation(String list, String[] urls){
- 		//outline for inserting into table
+ 	
+ 	//getMaxOcc()					 :  returns max Occupancy for rooms
+ 	public void getMaxOcc() {
+ 		int max = 4;
+ 		String query = "SELECT MAX(MaxOccupancy) FROM Rooms as occupancy";
  		
- 		String addNew = "INSERT OR IGNORE INTO BlockLists (BlockID, BlockName)\n"
- 				+ " VALUES(null, ?);";
- 		try (PreparedStatement prep = con.prepareStatement(addNew)){
- 			prep.setString(1, list);
- 			prep.executeUpdate();
- 		} catch (SQLException e) {
- 			System.out.println(e);
- 		}	
-
- 		//outline of how to do a transaction (faster for many insert statements)
- 		StringBuilder insertQuery = new StringBuilder("BEGIN TRANSACTION;\n");
- 		for(String url : urls) {
- 			insertQuery.append((" INSERT OR IGNORE INTO Items (id, Item)\n" + 
- 					" VALUES(null, '" + url + "');\n"));
- 		}
- 		insertQuery.append("COMMIT;");
- 		try (Statement state2 = con.createStatement()){
- 			state2.executeUpdate(insertQuery.toString());
- 		} catch (SQLException e) {
- 			System.out.println(e);
- 		}
+        try (Statement state = con.createStatement();
+             ResultSet res = state.executeQuery(query)) {
+                max = res.getInt("occupancy");
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+        
+        MaxOccupancy = max;
  	}
+
+ 	
+	//newReservation()				 :  inserts new reservation into DB
+ 	//Parameters: Fields from Confirmation Page
+ 	public static void newReservation(){
+
+ 	}
+ 	
+ 	
+ 	//checkDateValid()				 :  returns boolean of validity of reservation based on dates
+ 	//Parameters: checkin, checkout
+ 	public boolean checkDateValid(String checkin, String checkout) {
+ 		return false;
+ 	}
+ 	
  	
  	//getAvailRooms()				 :  gets list of available rooms
  	//Parameters: Info from new res page
  	public ArrayList<String> getAvailRooms(String code,String bed, LocalDate checkin, LocalDate checkout,int occ) {
- 		//returns int of number of rooms found, if less than 5, call to get another method for 5 suggestions
+ 		//returns int of number of rooms found, if none found, call another to get 5 suggestions
+ 			
  		ArrayList<String> rooms = new ArrayList<>();
  		rooms.add("Abscond or bolster-			$175");
  		rooms.add("Convoke and sanguine-			$175");
  		return rooms;
- 	
  	}
- 	
- 	
- 	//checkNewRes()					 :  checks validity of reservation
- 	//Parameters: Date,RoomCode
- 	public boolean checkNewRes(int occupancy, LocalDate date, String roomCode) {
- 		//returns boolean if reservation is valid
- 		//valid if occupancy is ok and dates don't overlap
- 		return true;
- 	}
- 	
 
+ 	
  	//deleteReservation()			 :	deletes reservation
- 	//Parameters: ?
- 	public static void deleteRes(String list){
- 		//deletes from reservation table and customer table?? if that's their only reservation?
- 		String delete = "DELETE FROM ItemSettings WHERE BlockID= (SELECT BlockID FROM BlockLists WHERE BlockName=?);";
- 		String delete2 = "DELETE FROM Items WHERE ID NOT IN (SELECT US.ID FROM ItemSettings US);";
-
- 		try (Statement state2 = con.createStatement();
- 				PreparedStatement prep = con.prepareStatement(delete)){
- 			prep.setString(1, list);
+ 	//Parameters: reservation code
+ 	public void deleteRes(String rCode){
+ 		try (PreparedStatement prep = con.prepareStatement("DELETE FROM Reservations WHERE Code=?")){
+ 			prep.setString(1, rCode);
  			prep.executeUpdate();
- 			state2.executeUpdate(delete2);	
  		} catch (SQLException e) {
  			System.out.println(e);
  		}
  	}
  	
- 	
+ 
  	//searchRes()			 :  searches for reservation, T if valid, else F
  	//Parameters: reservation code
  	public boolean searchRes(int Code) {
- 		//searches Reservations for code
- 		//if result set is empty, false
- 		return true;
+ 		String query = "SELECT LastName FROM Reservations where Code=";
+        try (Statement state = con.createStatement();
+                ResultSet res = state.executeQuery(query)) {
+        	if(res.next() == false) {
+        		return false;
+        	}
+        		return true;
+           } catch (SQLException e) {
+               System.out.println(e);
+           }
+        return false;
  	}
  	
  	//getRes()				 :  get reservaton by code
@@ -219,31 +193,12 @@ public class Database {
  	}
 
 
- 	//getReservation()		 :  gets Reservation by ??
- 	//Parameters: ??
+ 	//getReservation()		 :  gets Reservation by resCode
+ 	//Parameters: resCode
  	public static Map<String, Integer> getReservation() {
- 		//queries to get sites recently used in WebsiteUsage
- 		//same as print but add to a dictionary-type thing
-
- 		//("www.instagram.com", 45)
- 		LinkedHashMap <String, Integer> recents = new LinkedHashMap<>();
- 		String getRecent = "SELECT u.Item AS item, w.elapsedTime as elapsed"
- 				+ " FROM WebsiteUsage AS w"
- 				+ " LEFT JOIN Items as u on w.ID = u.ID"
- 				+ " ORDER BY elapsed DESC LIMIT 5;";
-
- 		try (Statement state = con.createStatement();
- 			ResultSet usage = state.executeQuery(getRecent)){		
- 	        //get values and add to recents list
- 	        while(usage.next()) {
- 	        	int time = usage.getInt("elapsed");
- 	        	String foundURL = usage.getString("item");
- 	        	recents.put(foundURL, time);
- 	        }
- 		} catch (SQLException e) {
- 			System.out.println(e);
- 		}
- 		return recents;		
+ 		//("FirstName": "Sydney" , "LastName": "Jaques ...)
+ 		LinkedHashMap <String, Integer> resInfo = new LinkedHashMap<>();
+ 		return resInfo;		
  	}
 
 	
