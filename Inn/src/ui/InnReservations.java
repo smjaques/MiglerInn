@@ -92,7 +92,7 @@ public class InnReservations extends Application{
 	
 	
 	//starting screen after login, main menu
-	public void mainMenu(Stage primaryStage) {	
+	public void mainMenu(Stage primaryStage){	
 		
 		GridPane screen = new GridPane();
 		
@@ -144,6 +144,11 @@ public class InnReservations extends Application{
 			@Override
 			public void handle(ActionEvent event) {
 				//have global list of usernames,passwords. Use this one to sign in.
+				try {
+					DB.dbLogout();
+				} catch (SQLException e) {
+					System.out.println(e);
+				}
 				loginScreen(primaryStage);
 			}
 		});
@@ -185,9 +190,62 @@ public class InnReservations extends Application{
 			}
 		});
 		
+		//CHANGE RES: make changes to existing reservation
+		Button changeRes = new Button("Change Reservation");
+		String changeResIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		String changeResHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		changeRes.setStyle(changeResIdle);
+		changeRes.setOnMouseEntered(e -> changeRes.setStyle(changeResHover));
+		changeRes.setOnMouseExited(e -> changeRes.setStyle(changeResIdle));
+		changeRes.setLayoutX(140);
+		changeRes.setLayoutY(180);
+		changeRes.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {				
+				//display reservations for today on right pane
+				Text resCode = new Text(10,200, "Enter Reservation Code: ");
+				//today.setFill(Color.DARKOLIVEGREEN);
+				resCode.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18.0));
+				TextField enterResCode = new TextField();
+				enterResCode.setPromptText("i.e. 12345");
+				enterResCode.setLayoutX(200);
+				enterResCode.setLayoutY(181);
+				//enterResCode.setStyle("-fx-background-color: darkolivegreen; -fx-text-fill: white");
+				
+		        right.getChildren().clear();
+				// user enters reservation code on right
+				
+				Button search = new Button("Search");
+				String searchIdle = "-fx-font: 15 serif; -fx-background-color: darkgrey; -fx-text-fill: black;";
+				String searchHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+				search.setStyle(searchIdle);
+				search.setOnMouseEntered(e -> search.setStyle(searchHover));
+				search.setOnMouseExited(e -> search.setStyle(searchIdle));
+				search.setLayoutX(140);
+				search.setLayoutY(230);
+				right.getChildren().addAll(resCode, enterResCode, search);
+				search.setOnAction(new EventHandler<ActionEvent>() {
+					
+					@Override
+					public void handle(ActionEvent event) {	
+						Integer rCode = Integer.parseInt(enterResCode.getText());
+						if(!DB.searchRes(rCode)) {
+							//stay on page, enter error message
+						}
+						else {
+							updateRes(primaryStage, left, right, rCode);
+						}
+					}
+					
+					
+				});	
+			}
+		});
 		
 		
-		left.getChildren().addAll(rooms, newRes);
+		
+		left.getChildren().addAll(rooms, newRes, changeRes);
 		
 		primaryStage.setScene(new Scene(screen));
 		primaryStage.setTitle("Migler Inn");
@@ -315,7 +373,7 @@ public class InnReservations extends Application{
 		String cancelHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
 		cancel.setOnMouseEntered(e -> cancel.setStyle(cancelHover));
 		cancel.setOnMouseExited(e -> cancel.setStyle(cancelIdle));
-		cancel.setLayoutX(220);
+		cancel.setLayoutX(240);
 		cancel.setLayoutY(400);
 		cancel.setOnAction(new EventHandler<ActionEvent>() {
 			
@@ -326,7 +384,9 @@ public class InnReservations extends Application{
 		});
 		
 		Label AvailRooms = new Label("Available Rooms:");
-		AvailRooms.setLayoutX(100);
+		AvailRooms.setLayoutX(80);
+		AvailRooms.setLayoutY(30);
+		AvailRooms.setStyle("-fx-font: 30 serif; -fx-text-fill: darkgrey;");
 		Label rooms = new Label("");
 		rooms.setLayoutX(60);
 		rooms.setLayoutY(80);
@@ -338,7 +398,7 @@ public class InnReservations extends Application{
 		String submitHover = "-fx-font: 14 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
 		submit.setOnMouseEntered(e -> submit.setStyle(submitHover));
 		submit.setOnMouseExited(e -> submit.setStyle(submitIdle));
-		submit.setLayoutX(30);
+		submit.setLayoutX(50);
 		submit.setLayoutY(400);
 		submit.setOnAction(new EventHandler<ActionEvent>() {
 			
@@ -355,14 +415,20 @@ public class InnReservations extends Application{
 				String adults = numAdults.getText();
 				String kids = numKids.getText();
 				
-				int Y = 100;
+				int Y = 90;
 				
 				ArrayList<String> res = DB.getAvailRooms(code,bed,checkin,checkout,Integer.parseInt(adults+kids));
 				for(String r : res) {
 					Button option = new Button(r);
-					option.setLayoutX(200);
 					option.setLayoutY(Y);
-					Y += 20;
+					option.setMaxWidth(400);
+					option.setMinWidth(400);
+					String optionIdle = "-fx-background-color: darkolivegreen; -fx-text-fill: white";
+					String optionHover = "-fx-background-color: darkgrey; -fx-text-fill: white";
+					option.setStyle(optionIdle);
+					option.setOnMouseEntered(e -> option.setStyle(optionHover));
+					option.setOnMouseExited(e -> option.setStyle(optionIdle));
+					Y += 30;
 					right.getChildren().add(option);
 					
 					//set event where if clicked, sends info to confirmation page!
@@ -372,6 +438,7 @@ public class InnReservations extends Application{
 						public void handle(ActionEvent event) {
 							//have global list of usernames,passwords. Use this one to sign in.
 							String picked = option.getText();
+							picked = picked.split("-")[0];
 							confirmationPage(primaryStage,fname,lname,code,bed,checkin,checkout,adults,kids,picked);
 						}
 					});
@@ -457,7 +524,8 @@ public class InnReservations extends Application{
 					+ "\n\n	Room Code: " + code + "\n\n	Bed Type: " + bed 
 					+ "\n\n	Checkin Date: " + String.valueOf(checkin) 
 					+ "\n\n	Checkout Date: " + String.valueOf(checkout)
-					+ "\n\n	Adults: " + adults + "\n\n	Kids: " + kids;
+					+ "\n\n	Adults: " + adults + "\n\n	Kids: " + kids
+					+ "\n\n	Room: " + roomOption;
 			Label confirm = new Label(details);
 			confirm.setStyle("-fx-font: 12 serif; -fx-text-fill: white;");
 			confirm.setLayoutY(100);
@@ -550,16 +618,181 @@ public class InnReservations extends Application{
 		primaryStage.setScene(new Scene(screen));
 		primaryStage.setTitle("Migler Inn");
 		primaryStage.show();
-		
-	
-
-		
-		
-		
-		//query result on right: have default being reservations for today
-
 	}
 		
+	public void updateRes(Stage primaryStage, Pane left, Pane right, int code) {
+		left.getChildren().clear();
+		right.getChildren().clear();
+		
+		//make call to database to get all information to display here
+		
+		//Firstname
+		TextField fName = new TextField();
+		fName.setPromptText("First Name");
+		fName.setLayoutX(50);
+		fName.setLayoutY(100);
+		fName.setPrefWidth(130);
+		fName.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		//fName.setText(value);
+		//value = result from map('Firstname');
+		
+		//Lastname
+		TextField lName = new TextField();
+		lName.setPromptText("Last Name");
+		lName.setLayoutX(200);
+		lName.setLayoutY(100);
+		lName.setPrefWidth(130);
+		lName.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		
+		//RoomCode
+		TextField rCode = new TextField();
+		rCode.setPromptText("Room Code");
+		rCode.setLayoutX(50);
+		rCode.setLayoutY(140);
+		rCode.setPrefWidth(90);
+		rCode.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		
+		//BedType
+		TextField bedType = new TextField();
+		bedType.setPromptText("Bed Type");
+		bedType.setLayoutX(238);
+		bedType.setLayoutY(140);
+		bedType.setPrefWidth(90);
+		bedType.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		
+		//Arrival Date
+		DatePicker arrival = new DatePicker();
+		arrival.setPromptText("Checkin");
+        arrival.setLayoutX(50);
+        arrival.setLayoutY(180);
+		arrival.setShowWeekNumbers(true);
+		arrival.setPrefWidth(130);
+        arrival.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent e) 
+            { 
+                // get the date picker value 
+                LocalDate checkin = arrival.getValue(); 
+            } 
+        });
+	    
+        //Departure Date
+        DatePicker departure = new DatePicker();
+        departure.setShowWeekNumbers(true);
+        departure.setPromptText("Checkout");
+        departure.setLayoutX(200);
+        departure.setLayoutY(180);
+        departure.setPrefWidth(130);
+        departure.setOnAction(new EventHandler<ActionEvent>() {
+	        public void handle(ActionEvent e) 
+	        { 
+	            // get the date picker value 
+	            LocalDate checkout = arrival.getValue(); 
+	        } 
+	    });
+        
+        //NumChildren
+        TextField numKids = new TextField();
+		numKids.setPromptText("Kids");
+		numKids.setLayoutX(50);
+		numKids.setLayoutY(220);
+		numKids.setPrefWidth(60);
+		numKids.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+	     
+		//NumAdults
+        TextField numAdults = new TextField();
+        numAdults.setPromptText("Adults");
+        numAdults.setLayoutX(270);
+        numAdults.setLayoutY(220);
+        numAdults.setPrefWidth(60);
+        numAdults.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+        
+		//cancel
+		Button cancel = new Button("Cancel");
+		String cancelIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		cancel.setStyle(cancelIdle);
+		String cancelHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		cancel.setOnMouseEntered(e -> cancel.setStyle(cancelHover));
+		cancel.setOnMouseExited(e -> cancel.setStyle(cancelIdle));
+		cancel.setLayoutX(240);
+		cancel.setLayoutY(400);
+		cancel.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				mainMenu(primaryStage);
+			}
+		});
+		
+		Label AvailRooms = new Label("Available Rooms:");
+		AvailRooms.setLayoutX(80);
+		AvailRooms.setLayoutY(30);
+		AvailRooms.setStyle("-fx-font: 30 serif; -fx-text-fill: darkgrey;");
+		Label rooms = new Label("");
+		rooms.setLayoutX(60);
+		rooms.setLayoutY(80);
+		
+		//Submit
+		Button submit = new Button("Show Available Rooms");
+		String submitIdle = "-fx-font: 14 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		submit.setStyle(submitIdle);
+		String submitHover = "-fx-font: 14 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		submit.setOnMouseEntered(e -> submit.setStyle(submitHover));
+		submit.setOnMouseExited(e -> submit.setStyle(submitIdle));
+		submit.setLayoutX(50);
+		submit.setLayoutY(400);
+		submit.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				//take to confirmation page displaying data they put in
+				String fname = fName.getText();
+				String lname = lName.getText();
+				String code = rCode.getText();
+				String bed = bedType.getText();
+				LocalDate checkin = arrival.getValue();
+				LocalDate checkout = departure.getValue();
+				//checkin and checkout are above
+				String adults = numAdults.getText();
+				String kids = numKids.getText();
+				
+				int Y = 90;
+				
+				ArrayList<String> res = DB.getAvailRooms(code,bed,checkin,checkout,Integer.parseInt(adults+kids));
+				for(String r : res) {
+					Button option = new Button(r);
+					option.setLayoutY(Y);
+					option.setMaxWidth(400);
+					option.setMinWidth(400);
+					String optionIdle = "-fx-background-color: darkolivegreen; -fx-text-fill: white";
+					String optionHover = "-fx-background-color: darkgrey; -fx-text-fill: white";
+					option.setStyle(optionIdle);
+					option.setOnMouseEntered(e -> option.setStyle(optionHover));
+					option.setOnMouseExited(e -> option.setStyle(optionIdle));
+					Y += 30;
+					right.getChildren().add(option);
+					
+					//set event where if clicked, sends info to confirmation page!
+					option.setOnAction(new EventHandler<ActionEvent>() {
+						
+						@Override
+						public void handle(ActionEvent event) {
+							//have global list of usernames,passwords. Use this one to sign in.
+							String picked = option.getText();
+							picked = picked.split("-")[0];
+							confirmationPage(primaryStage,fname,lname,code,bed,checkin,checkout,adults,kids,picked);
+						}
+					});
+					
+				}
+			}
+		});
+	
+		
+		left.getChildren().addAll(cancel,fName,lName,rCode,bedType,arrival,departure,numKids,numAdults,
+				submit);
+		right.getChildren().addAll(AvailRooms,rooms);	
+	
+	}
 
 
 	

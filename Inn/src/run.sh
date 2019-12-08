@@ -1,3 +1,4 @@
 #!/bin/bash
 
-java ui.InnReservations
+
+java -cp mysql-connector-java-8.0.16.jar:. ui.InnReservations

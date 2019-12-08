@@ -23,9 +23,16 @@ public class Database {
  	//getconnection()  		 :  connects to database*
  	//Connect to database with given username and password
  	public void getConnection(String user,String pass) throws ClassNotFoundException, SQLException {
- 		//use sample .java to connect to database using user/pass
+ 		//export HP_JDBC_URL=jdbc:mysql://db.labthreesixfive.com/your_username_here?autoReconnect=true\&useSSL=false
+ 		//	export HP_JDBC_USER=
+ 		//	export HP_JDBC_PW=
  	}
 
+ 	//dbLocgout()			 : closes connection to db
+ 	public void dbLogout() throws SQLException {
+ 		//con.close();
+ 	}
+ 	
  	//getDatabaseMetaData()  :  prints all database columns and values
  	 public static void getDatabaseMetaData() throws SQLException {
  		 //example of how to print db 
@@ -152,8 +159,8 @@ public class Database {
  	public ArrayList<String> getAvailRooms(String code,String bed, LocalDate checkin, LocalDate checkout,int occ) {
  		//returns int of number of rooms found, if less than 5, call to get another method for 5 suggestions
  		ArrayList<String> rooms = new ArrayList<>();
- 		rooms.add("Honeymoon suite");
- 		rooms.add("Two Bedroom Modern");
+ 		rooms.add("Abscond or bolster-			$175");
+ 		rooms.add("Convoke and sanguine-			$175");
  		return rooms;
  	
  	}
@@ -184,26 +191,31 @@ public class Database {
  			System.out.println(e);
  		}
  	}
+ 	
+ 	
+ 	//searchRes()			 :  searches for reservation, T if valid, else F
+ 	//Parameters: reservation code
+ 	public boolean searchRes(int Code) {
+ 		//searches Reservations for code
+ 		//if result set is empty, false
+ 		return true;
+ 	}
+ 	
+ 	//getRes()				 :  get reservaton by code
+ 	//Parameters: reservation code
+ 	public Map<String, String> getRes(int code){
+ 		//returns map of result from reservation: 
+        LinkedHashMap<String, String> res = new LinkedHashMap<>();
+
+ 		return res;
+
+ 	}
 
  	//updateRes()			 :	updates reservation
  	//Parameters: what to update, value
  	public static void updateRes(Integer elapsedTime, String url) {
- 		int id = 0;
- 		LocalDate localDate = LocalDate.now();
- 		//get reservationId
- 		String getID = "SELECT ID FROM Items WHERE Customer = ?;";
- 		
- 		//use reservationId to update Res
- 		String insert = "UPDATE WebsiteUsage SET ID= ?, Guests=?, Date = ? WHERE"
-			 		+ " ID = ? AND Date = ?;";
+ 		//delete first res, insert all new one? 
 
-
- 		try(PreparedStatement prep = con.prepareStatement(insert)){
- 			prep.setInt(1, id);
- 			prep.executeUpdate();
- 		} catch (SQLException e) {
- 			System.out.println(e);
- 		}
  	}
 
 
