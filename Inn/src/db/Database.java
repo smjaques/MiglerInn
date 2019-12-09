@@ -24,6 +24,16 @@ public class Database {
  	//getconnection()  		 :  connects to database*
  	//Connect to database with given username and password
  	public void getConnection(String user,String pass) throws ClassNotFoundException, SQLException {
+        String jdbcUrl = System.getenv("HP_JDBC_URL");
+        String jdbcUser = System.getenv("HP_JDBC_USER");
+        String jdbcPW = System.getenv("HP_JDBC_PW");
+        try{
+            Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPW);
+            con = conn;
+            System.out.println("Connection established.");
+        } catch (Exception e) {
+            System.out.println(e);
+        }
  		//export HP_JDBC_URL=jdbc:mysql://db.labthreesixfive.com/your_username_here?autoReconnect=true\&useSSL=false
  		//	export HP_JDBC_USER=
  		//	export HP_JDBC_PW=
@@ -80,28 +90,28 @@ public class Database {
  		}
  		hashTables = true;
  	}
-
- 	
- 	//restartDB()			 :  wipe and delete all database tables (cannot be undone)
- 	public static void restartDB() {
- 		try (Statement state = con.createStatement()){
- 			String sql = "DROP TABLE ...;";
- 			state.executeUpdate(sql);
-
-
- 		} catch (SQLException e) {
- 			System.out.println(e);
- 		}
- 	}
  	
  	
  	//get all reservations today
  	public String getTodayRes(LocalDate today) {
- 		return "	First Name		Last Name 			RoomCode\n\n"
- 				+ "	Sydney			Jaques				AAA\n"
- 				+ "	Pramika			Kumar				AAB\n"
- 				+ "	Pranathi			Guntupalli			AAC\n"
- 				+ "	Rafi				Cohn-Gruenwald		AAD\n";
+        String sql = "SELECT FirstName, LastName, Room FROM lab7_reservations " + 
+                     "WHERE CheckIn < CURDATE() AND Checkout > CURDATE()";
+        
+        String result = "\t\tFirst Name\t\tLastName\t\tRoomCode\n\n";
+        try {
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while(rs.next()){
+                result += rs.getString("\t\tFirstName") + "\t\t";
+                result += rs.getString("LastName") + "\t\t";
+                result += rs.getString("Room") + "\n";
+            }
+        } catch (Exception e) {
+            return "";
+        }
+
+        return result;
  		//return in a way where we can display in label with javafx?
  	}
  	
@@ -129,6 +139,7 @@ public class Database {
  	
  	
  	//checkDateValid()				 :  returns boolean of validity of reservation based on dates
+
  	//Parameters: roomCode, checkin, checkout, ResCode
  	public boolean checkDateValid(int RoomCode, String checkin, String checkout, int ResCode) {
 		// check for date conflict
@@ -153,6 +164,7 @@ public class Database {
 		}
 
  		return true;
+
  	}
  	
  	
@@ -165,6 +177,15 @@ public class Database {
  		rooms.add("Abscond or bolster-			$175");
  		rooms.add("Convoke and sanguine-			$175");
  		return rooms;
+ 	}
+ 	
+ 	//getTotalCost()				 :  gets total cost of reservation
+ 	//Parameters: roomCode, checkin, checkout 
+ 	public double getTotalCost(int code, String checkin,String checkout) {
+ 		//Number of weekdays multipled by room base rate
+ 		//Number of weekend days multiplied by 110% of the room base rate
+ 		//An 18% tourism tax applied to the total of the above two calculations
+ 		return 1.0;
  	}
 
  	
