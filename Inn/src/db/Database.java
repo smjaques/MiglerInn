@@ -25,7 +25,7 @@ public class Database {
 
  	//getconnection()  		 :  connects to database*
  	//Connect to database with given username and password
- 	public void getConnection(String user,String pass) throws ClassNotFoundException, SQLException {
+ 	public void getConnection() throws ClassNotFoundException, SQLException {
         String jdbcUrl = System.getenv("HP_JDBC_URL");
         String jdbcUser = System.getenv("HP_JDBC_USER");
         String jdbcPW = System.getenv("HP_JDBC_PW");
@@ -36,9 +36,6 @@ public class Database {
         } catch (Exception e) {
             System.out.println(e);
         }
- 		//export HP_JDBC_URL=jdbc:mysql://db.labthreesixfive.com/your_username_here?autoReconnect=true\&useSSL=false
- 		//	export HP_JDBC_USER=
- 		//	export HP_JDBC_PW=
  	}
 
  	//dbLocgout()			 : closes connection to db
