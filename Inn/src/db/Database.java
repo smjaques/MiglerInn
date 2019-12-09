@@ -14,6 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 public class Database {
  	private static Connection con;
@@ -103,7 +105,7 @@ public class Database {
             ResultSet rs = stmt.executeQuery(sql);
 
             while(rs.next()){
-                result += rs.getString("\t\tFirstName") + "\t\t";
+                result += "\t\t" + rs.getString("FirstName") + "\t\t";
                 result += rs.getString("LastName") + "\t\t";
                 result += rs.getString("Room") + "\n";
             }
@@ -114,6 +116,48 @@ public class Database {
         return result;
  		//return in a way where we can display in label with javafx?
  	}
+
+    //see rooms ordered by popularity
+    public String seeRooms(){
+        String line;
+        String query = "";
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("FR1.sql"));
+            while((line = br.readLine()) != null){
+                query += line;
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+        String result = "\t\tRoom Code\t\tRoom Name\t\tBeds\t\tBed Type" + 
+                        "\t\tMax Occupants\t\tBase Price\t\tDecor" + 
+                        "\t\tRoom Popularity\t\tNext Date Available" + 
+                        "\t\tMost Recent Stay\t\tMost Recent Checkout\n\n";
+        try {
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+
+            while(rs.next()){
+                result += "\t\t" + rs.getString("RoomCode") + "\t\t";
+                result += rs.getString("RoomName") + "\t\t";
+                result += rs.getString("Beds") + "\t\t";
+                result += rs.getString("bedType") + "\t\t";
+                result += rs.getString("maxOcc") + "\t\t";
+                result += rs.getString("basePrice") + "\t\t";
+                result += rs.getString("decor") + "\t\t";
+                result += rs.getString("Room Popularity") + "\t\t";
+                result += rs.getString("Next Available Check-in Date") + "\t\t";
+                result += rs.getString("Most Recent Stay") + "\t\t";
+                result += rs.getString("Most Recent Checkout") + "\n";
+            }
+        } catch (Exception e) {
+            System.out.println("here");
+            System.out.println(e);
+        }
+
+        return result;
+    }
  	
  	//getMaxOcc()					 :  returns max Occupancy for rooms
  	public void getMaxOcc() {
