@@ -131,9 +131,63 @@ public class Database {
  	}
 
  	
-	//newReservation()				 :  inserts new reservation into DB
+		//newReservation()				 :  inserts new reservation into DB
  	//Parameters: Fields from Confirmation Page
- 	public static void newReservation(){
+	 public static void newReservation(String fname, String lname, int RoomCode, String checkin, 
+	 									String checkout, int adults, int kids) {
+	
+		int rate;		
+		int code;							
+		String query = "Select rate FROM rooms where RoomCode = ?";
+		try(PreparedStatement prep = con.prepareStatement(query)) {
+			prep.executeUpdate();
+			
+			// get room rate
+			ResultSet res = prep.executeQuery(query);
+			if (res.next()) {
+				rate = res.getInt("rate");
+				
+				// get max reservation code and increment by 1
+				String getCode = "Select max(code) from reservations";
+				try(PreparedStatement prep1 = con.prepareStatement(getCode)) {
+					prep1.executeUpdate();
+					ResultSet res2 = prep1.executeQuery(query);
+					if (res2.next()) {
+						code = res2.getInt("code") + 1;
+						
+						System.out.println("HERE");
+
+						// insert new reservation
+						String addReservation = "INSERT INTO reservations (room, checkin, checkout, rate, lastname, firstname, adults, kids)" +
+									"Values (?, ?, ?, ?, ?, ?, ?, ?, ?)";	
+						try(PreparedStatement prep2 = con.prepareStatement(addReservation)) {
+							prep2.setInt(1, code);
+							prep2.setInt(2, RoomCode);
+							prep2.setString(3, checkin);
+							prep2.setString(4, checkout);
+							prep2.setInt(4, rate);
+							prep2.setString(5, lname);
+							prep2.setString(6, fname);
+							prep2.setInt(7, adults);
+							prep2.setInt(8, kids);
+							prep2.executeUpdate();
+						}
+						
+						catch(SQLException e) {
+							System.out.println(e);
+						}	
+
+					}
+				}
+				catch(SQLException e) {
+					System.out.println(e);
+				}	
+			}
+		}
+		
+		catch(SQLException e) {
+			System.out.println(e);
+		}
 
  	}
  	
