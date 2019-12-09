@@ -24,6 +24,16 @@ public class Database {
  	//getconnection()  		 :  connects to database*
  	//Connect to database with given username and password
  	public void getConnection(String user,String pass) throws ClassNotFoundException, SQLException {
+        String jdbcUrl = System.getenv("HP_JDBC_URL");
+        String jdbcUser = System.getenv("HP_JDBC_USER");
+        String jdbcPW = System.getenv("HP_JDBC_PW");
+        try{
+            Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPW);
+            con = conn;
+            System.out.println("Connection established.");
+        } catch (Exception e) {
+            System.out.println(e);
+        }
  		//export HP_JDBC_URL=jdbc:mysql://db.labthreesixfive.com/your_username_here?autoReconnect=true\&useSSL=false
  		//	export HP_JDBC_USER=
  		//	export HP_JDBC_PW=
@@ -97,11 +107,24 @@ public class Database {
  	
  	//get all reservations today
  	public String getTodayRes(LocalDate today) {
- 		return "	First Name		Last Name 			RoomCode\n\n"
- 				+ "	Sydney			Jaques				AAA\n"
- 				+ "	Pramika			Kumar				AAB\n"
- 				+ "	Pranathi			Guntupalli			AAC\n"
- 				+ "	Rafi				Cohn-Gruenwald		AAD\n";
+        String sql = "SELECT FirstName, LastName, Room FROM lab7_reservations " + 
+                     "WHERE CheckIn < CURDATE() AND Checkout > CURDATE()";
+        
+        String result = "\t\tFirst Name\t\tLastName\t\tRoomCode\n\n";
+        try {
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while(rs.next()){
+                result += rs.getString("\t\tFirstName") + "\t\t";
+                result += rs.getString("LastName") + "\t\t";
+                result += rs.getString("Room") + "\n";
+            }
+        } catch (Exception e) {
+            return "";
+        }
+
+        return result;
  		//return in a way where we can display in label with javafx?
  	}
  	
