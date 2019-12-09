@@ -90,19 +90,6 @@ public class Database {
  		}
  		hashTables = true;
  	}
-
- 	
- 	//restartDB()			 :  wipe and delete all database tables (cannot be undone)
- 	public static void restartDB() {
- 		try (Statement state = con.createStatement()){
- 			String sql = "DROP TABLE ...;";
- 			state.executeUpdate(sql);
-
-
- 		} catch (SQLException e) {
- 			System.out.println(e);
- 		}
- 	}
  	
  	
  	//get all reservations today
@@ -153,7 +140,7 @@ public class Database {
  	
  	//checkDateValid()				 :  returns boolean of validity of reservation based on dates
  	//Parameters: checkin, checkout
- 	public boolean checkDateValid(String checkin, String checkout) {
+ 	public boolean checkDateValid(int resCode, String checkin, String checkout) {
  		return false;
  	}
  	
@@ -167,6 +154,15 @@ public class Database {
  		rooms.add("Abscond or bolster-			$175");
  		rooms.add("Convoke and sanguine-			$175");
  		return rooms;
+ 	}
+ 	
+ 	//getTotalCost()				 :  gets total cost of reservation
+ 	//Parameters: roomCode, checkin, checkout 
+ 	public double getTotalCost(int code, String checkin,String checkout) {
+ 		//Number of weekdays multipled by room base rate
+ 		//Number of weekend days multiplied by 110% of the room base rate
+ 		//An 18% tourism tax applied to the total of the above two calculations
+ 		return 1.0;
  	}
 
  	
