@@ -261,16 +261,7 @@ public class Database {
         }
         return false;
  	}
- 	
- 	//getRes()				 :  get reservaton by code
- 	//Parameters: reservation code
- 	public Map<String, String> getRes(int code){
- 		//returns map of result from reservation: 
-        LinkedHashMap<String, String> res = new LinkedHashMap<>();
 
- 		return res;
-
- 	}
 
  	//updateRes()			 :	updates reservation
  	//Parameters: what to update, value
