@@ -185,22 +185,51 @@ public class Database {
 
  	}
 
- 	//updateRes()			 :	updates reservation
- 	//Parameters: what to update, value
- 	public static void updateRes(Integer elapsedTime, String url) {
- 		//delete first res, insert all new one? 
+//updateRes()            :  updates reservation
+    //Parameters: what to update, value
+    public static void updateRes(Integer code, String colName, String value){
+        String Updatequery = "Update reservations set ? = ? where Code =  ?";
+        try(PreapredStatement pstmt = con.prepareStatement(Updatequery){
+            pstmt.setInt = (1, code)
+            pstmt.setString = (2, colname);
+            if (colname = 'Adults' or 'Kids') {
+                int num = Integer.parseInt(value)
+                pstmt.setInt = (3, num);
+            }
+            else{
+                pstmt.setString = (3, value);
+            }
+            int rowcount = pstmt.executeUpdate();
+            System.out.format("Updated %d records for %s reservations%n", rowCount, code);
+        }
+        catch (SQLException e) {
+            System.out.println(e);
+        }
 
- 	}
+    }
 
-
- 	//getReservation()		 :  gets Reservation by resCode
- 	//Parameters: resCode
- 	public static Map<String, Integer> getReservation() {
- 		//("FirstName": "Sydney" , "LastName": "Jaques ...)
- 		LinkedHashMap <String, Integer> resInfo = new LinkedHashMap<>();
- 		return resInfo;		
- 	}
-
-	
+    //getReservation()       :  gets Reservation by resCode
+    //Parameters: resCode
+    public static Map<String, Integer> getReservation(int code){
+        String query = "Select FirstName, LastName, Room, CheckIn, CheckOut, Adults, Kids from reservations where Code = ?"
+        try (PreparedStatement prep = conn.prepareStatement(query)){
+            prep.setString(1, code);
+            ResultSet res = prep.executeQuery(query)
+            LinkedHashMap <String, Integer> resInfo = new LinkedHashMap<>();
+            while (res.next()){
+                 resInfo.put("FirstName", res.getString("FirstName"));
+                 resInfo.put("LastName", res.getString("LastName"));
+                 resInfo.put("Room", res.getString("Room"));
+                 resInfo.put("CheckIn", res.getString("Checkin"));
+                 resInfo.put("CheckOut", res.getString("CheckOut"));
+                 resInfo.put("Adults", res.getInt("Adults"));
+                 resInfo.put("Kids", res.getInt("Kids"));
+            }
+            return resInfo;     
+        }
+        catch (SQLException e) {
+            System.out.println(e);
+        }   
+    }
  }
 
