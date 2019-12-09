@@ -3,6 +3,7 @@ package ui;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import db.*;
 import javafx.application.Application;
@@ -599,7 +600,8 @@ public class InnReservations extends Application{
 		right.getChildren().clear();
 		
 		//make call to database to get all information to display here
-		
+		LinkedHashMap <String, String> resInfo = DB.getReservation(resCode);
+		System.out.println(resInfo.toString());
 		//Change Res
 		Text change = new Text(70, 50, "Reservation : " + resCode);
 		change.setFill(Color.WHITE);
