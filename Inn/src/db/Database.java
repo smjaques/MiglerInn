@@ -175,7 +175,7 @@ public class Database {
  	
 		//newReservation()				 :  inserts new reservation into DB
  	//Parameters: Fields from Confirmation Page
-	 public static void newReservation(String fname, String lname, int RoomCode, String checkin, 
+	 public void newReservation(String fname, String lname, int RoomCode, String checkin, 
 	 									String checkout, int adults, int kids) {
 	
 		int rate;		

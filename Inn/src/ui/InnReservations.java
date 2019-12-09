@@ -547,6 +547,8 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
+				DB.newReservation(fname, lname, Integer.parseInt(code), checkin.toString(),
+						checkout.toString(), Integer.parseInt(adults), Integer.parseInt(kids));
 				//have global list of usernames,passwords. Use this one to sign in.
 				mainMenu(primaryStage);
 			}
