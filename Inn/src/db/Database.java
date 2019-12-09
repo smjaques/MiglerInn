@@ -121,11 +121,12 @@ public class Database {
         try {
             BufferedReader br = new BufferedReader(new FileReader("FR1.sql"));
             while((line = br.readLine()) != null){
-                query += line;
+                query += line + "\n";
             }
         } catch (Exception e) {
             System.out.println(e);
         }
+        System.out.println(query);
 
         String result = "\t\tRoom Code\t\tRoom Name\t\tBeds\t\tBed Type" + 
                         "\t\tMax Occupants\t\tBase Price\t\tDecor" + 
