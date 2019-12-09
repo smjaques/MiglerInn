@@ -180,9 +180,32 @@ public class Database {
  	
  	
  	//checkDateValid()				 :  returns boolean of validity of reservation based on dates
- 	//Parameters: checkin, checkout
- 	public boolean checkDateValid(int resCode, String checkin, String checkout) {
- 		return false;
+
+ 	//Parameters: roomCode, checkin, checkout, ResCode
+ 	public boolean checkDateValid(int RoomCode, String checkin, String checkout, int ResCode) {
+		// check for date conflict
+		String query = "Select checkin, checkout FROM Reservations WHERE code = ?" +
+			" AND (? between checkin and checkout OR ? between checkin and checkout) AND <> ?";
+		
+		try(PreparedStatement prep = con.prepareStatement(query);
+			ResultSet res = prep.executeQuery(query)){
+			prep.setInt(1, RoomCode);
+			prep.setString(2, checkin);
+			prep.setString(3, checkout);
+			prep.setInt(4, ResCode);
+			prep.executeUpdate();
+
+			if(res.next() == false) {
+				return true;
+			}
+				return false;
+		}
+		catch(SQLException e) {
+			System.out.println(e);
+		}
+
+ 		return true;
+
  	}
  	
  	
@@ -222,7 +245,7 @@ public class Database {
  	//searchRes()			 :  searches for reservation, T if valid, else F
  	//Parameters: reservation code
  	public boolean searchRes(int Code) {
- 		String query = "SELECT LastName FROM Reservations where Code=";
+ 		String query = "SELECT LastName FROM Reservations where Code = ? ";
         try (Statement state = con.createStatement();
                 ResultSet res = state.executeQuery(query)) {
         	if(res.next() == false) {
@@ -249,7 +272,7 @@ public class Database {
  	//Parameters: what to update, value
  	public static void updateRes(Integer elapsedTime, String url) {
  		//delete first res, insert all new one? 
-
+		
  	}
 
 
