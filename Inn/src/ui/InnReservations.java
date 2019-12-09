@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import db.*;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -28,67 +29,9 @@ public class InnReservations extends Application{
 	
 	@Override
 	public void start(Stage primaryStage) {
-		loginScreen(primaryStage);
+		mainMenu(primaryStage);
 	};
-	
-	public void loginScreen(Stage primaryStage) {
-		//login screen
-		Pane login = new Pane();
-		login.setPrefSize(400,500);
-		
-		Label title = new Label("The Migler Inn");
-		title.setLayoutX(80);
-		title.setLayoutY(20);
-		title.setStyle("-fx-font: 40 serif; -fx-text-fill: darkolivegreen");
-		
-		Label welcome = new Label("Enter login credentials");
-		welcome.setStyle("-fx-font: 16 serif; -fx-text-fill: darkolivegreen");
-		welcome.setLayoutX(120);
-		welcome.setLayoutY(160);
-		
-		TextField username = new TextField("Username");
-		username.setLayoutX(110);
-		username.setLayoutY(200);
-		username.setStyle("-fx-background-color: darkolivegreen; -fx-text-fill: white");
-		TextField password = new TextField("Password");
-		password.setLayoutX(110);
-		password.setLayoutY(230);
-		password.setStyle("-fx-background-color: darkolivegreen; -fx-text-fill: white");
 
-		Button submit = new Button("Submit");
-		submit.setStyle("-fx-background-color: grey; -fx-text-fill: white");
-
-		String submitIdle = "-fx-background-color: grey; -fx-text-fill: white";
-		String submitHover = "-fx-background-color: darkgrey; -fx-text-fill: white";
-		submit.setOnMouseEntered(e -> submit.setStyle(submitHover));
-		submit.setOnMouseExited(e -> submit.setStyle(submitIdle));
-		
-		
-		submit.setLayoutX(160);
-		submit.setLayoutY(280);
-		submit.setOnAction(new EventHandler<ActionEvent>() {
-			
-			@Override
-			public void handle(ActionEvent event) {
-				String user = username.getText();
-				String pass = password.getText();
-				//have global list of usernames,passwords in DatabaseClass. Use one entered to sign in.
-				try {
-					DB.getConnection(user,pass);
-				} catch (Exception e) {
-					System.out.println(e);
-				}
-				mainMenu(primaryStage);
-			}
-		});
-		
-		login.getChildren().addAll(title, welcome, username, password, submit);
-		
-		primaryStage.setScene(new Scene(login));
-		primaryStage.show();
-		
-	};
-	
 	
 	
 	//starting screen after login, main menu
@@ -149,7 +92,7 @@ public class InnReservations extends Application{
 				} catch (SQLException e) {
 					System.out.println(e);
 				}
-				loginScreen(primaryStage);
+			    System.exit(0);
 			}
 		});
 		
@@ -378,13 +321,6 @@ public class InnReservations extends Application{
         arrival.setLayoutX(50);
         arrival.setLayoutY(180);
 		arrival.setPrefWidth(130);
-//        arrival.setOnAction(new EventHandler<ActionEvent>() {
-//            public void handle(ActionEvent e) 
-//            { 
-//                // get the date picker value 
-//                LocalDate checkin = arrival.getValue(); 
-//            } 
-//        });
 	    
         //Departure Date
         DatePicker departure = new DatePicker();
@@ -392,12 +328,6 @@ public class InnReservations extends Application{
         departure.setLayoutX(200);
         departure.setLayoutY(180);
         departure.setPrefWidth(130);
-//        departure.setOnAction(new EventHandler<ActionEvent>() {
-//	        public void handle(ActionEvent e) { 
-//	            // get the date picker value 
-//	            LocalDate checkout = arrival.getValue(); 
-//	        } 
-//	    });
         
         //NumChildren
         TextField numKids = new TextField();
@@ -504,6 +434,7 @@ public class InnReservations extends Application{
 								//have global list of usernames,passwords. Use this one to sign in.
 								String picked = option.getText();
 								picked = picked.split("-")[0];
+								DB.getTotalCost(Integer.parseInt(code), checkin.toString(),checkout.toString());
 								confirmationPage(primaryStage,fname,lname,code,bed,checkin,checkout,adults,kids,picked);
 							}
 						});
@@ -565,8 +496,12 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
-				//have global list of usernames,passwords. Use this one to sign in.
-				loginScreen(primaryStage);
+				try {
+					DB.dbLogout();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			    System.exit(0);
 			}
 		});
 		Text resMsg = new Text(80, 60, "Confirmation");
@@ -642,6 +577,8 @@ public class InnReservations extends Application{
 		primaryStage.show();
 	}
 	
+	
+	
 	//Update existing reservation	
 	public void updateRes(Stage primaryStage, Pane left, Pane right, int resCode) {
 		left.getChildren().clear();
@@ -684,13 +621,6 @@ public class InnReservations extends Application{
         arrival.setLayoutY(180);
 		arrival.setShowWeekNumbers(true);
 		arrival.setPrefWidth(130);
-        arrival.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent e) 
-            { 
-                // get the date picker value 
-                LocalDate checkin = arrival.getValue(); 
-            } 
-        });
 	    
         //Departure Date
         DatePicker departure = new DatePicker();
@@ -699,13 +629,6 @@ public class InnReservations extends Application{
         departure.setLayoutX(200);
         departure.setLayoutY(180);
         departure.setPrefWidth(130);
-        departure.setOnAction(new EventHandler<ActionEvent>() {
-	        public void handle(ActionEvent e) 
-	        { 
-	            // get the date picker value 
-	            LocalDate checkout = arrival.getValue(); 
-	        } 
-	    });
         
         //NumChildren
         TextField numKids = new TextField();
@@ -753,16 +676,14 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
+				DB.checkDateValid(resCode, arrival.getValue().toString(), departure.getValue().toString());
 				//check if different reservation exists in room on dates
 				//check if new occupancy is valid
 				//then confirmation page
 			}
 		});
-	
-		
 		left.getChildren().addAll(cancel,fName,lName,arrival,departure,numKids,numAdults,
 				submit,change,room);
-	
 	}
 
 
