@@ -200,17 +200,20 @@ public class Database {
  
  	//searchRes()			 :  searches for reservation, T if valid, else F
  	//Parameters: reservation code
- 	public boolean searchRes(int Code) {
+ 	public boolean searchRes(int Code) throws SQLException {
  		String query = "SELECT LastName FROM Reservations where Code = ? ";
-        try (Statement state = con.createStatement();
-                ResultSet res = state.executeQuery(query)) {
-        	if(res.next() == false) {
-        		return false;
-        	}
-        		return true;
+
+        try (PreparedStatement prep = con.prepareStatement(query)) {
+            prep.setInt(1, Code);
+            try (ResultSet res = prep.executeQuery()) {
+                if (res.next() == false) {
+                	return false;
+                }
+                	return true;
            } catch (SQLException e) {
                System.out.println(e);
            }
+        }
         return false;
  	}
  	

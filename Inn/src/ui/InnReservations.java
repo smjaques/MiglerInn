@@ -175,14 +175,19 @@ public class InnReservations extends Application{
 					@Override
 					public void handle(ActionEvent event) {	
 						Integer rCode = Integer.parseInt(enterResCode.getText());
-						if(!DB.searchRes(rCode)) {
-							Text error = new Text(60, 140, "Error: Reservation doesn't exist.");
-							error.setFill(Color.DARKOLIVEGREEN);
-							error.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 20.0));
-							right.getChildren().add(error);
-						}
-						else {
-							updateRes(primaryStage, left, right, rCode);
+						try {
+							if(!DB.searchRes(rCode)) {
+								Text error = new Text(60, 140, "Error: Reservation doesn't exist.");
+								error.setFill(Color.DARKOLIVEGREEN);
+								error.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 20.0));
+								right.getChildren().add(error);
+							}
+							else {
+								updateRes(primaryStage, left, right, rCode);
+							}
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
 					}					
 				});	
@@ -227,14 +232,19 @@ public class InnReservations extends Application{
 					@Override
 					public void handle(ActionEvent event) {	
 						Integer rCode = Integer.parseInt(enterResCode.getText());
-						if(!DB.searchRes(rCode)) {
-							Text error = new Text(60, 140, "Error: Reservation doesn't exist.");
-							error.setFill(Color.DARKOLIVEGREEN);
-							error.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 20.0));
-							right.getChildren().add(error);
-						}
-						else {
-							DB.deleteRes(rCode.toString());
+						try {
+							if(!DB.searchRes(rCode)) {
+								Text error = new Text(60, 140, "Error: Reservation doesn't exist.");
+								error.setFill(Color.DARKOLIVEGREEN);
+								error.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 20.0));
+								right.getChildren().add(error);
+							}
+							else {
+								DB.deleteRes(rCode.toString());
+							}
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
 					}					
 				});		
