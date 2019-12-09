@@ -27,8 +27,10 @@ import javafx.scene.shape.*;
 public class InnReservations extends Application{
 	Database DB = new Database();
 	
+	
 	@Override
-	public void start(Stage primaryStage) {
+	public void start(Stage primaryStage) throws ClassNotFoundException, SQLException {
+		DB.getConnection();
 		mainMenu(primaryStage);
 	};
 
@@ -385,15 +387,18 @@ public class InnReservations extends Application{
 				//take to confirmation page displaying data 
 				String fname = fName.getText();
 				String lname = lName.getText();
-				String code = rCode.getText();
 				String bed = bedType.getText();
 				LocalDate checkin = arrival.getValue();
 				LocalDate checkout = departure.getValue();
 				String adults = numAdults.getText();
 				String kids = numKids.getText();
+				String code = rCode.getText();
+				boolean valid = true;
+				if(!code.equalsIgnoreCase("any")) {
+					//valid = DB.checkDateValid(Integer.parseInt(code), checkin.toString(), checkout.toString(), 00000);
+				}
 				int Y = 90;
 				//DB CALL
-				boolean valid = DB.checkDateValid(checkin.toString(), checkout.toString());
 				if(!valid) {
 					//"Error: can't make Reservation"
 					Text resMsg = new Text(20, 60, "Error: Unable to Make Reservation");
@@ -431,10 +436,9 @@ public class InnReservations extends Application{
 							
 							@Override
 							public void handle(ActionEvent event) {
-								//have global list of usernames,passwords. Use this one to sign in.
 								String picked = option.getText();
 								picked = picked.split("-")[0];
-								DB.getTotalCost(Integer.parseInt(code), checkin.toString(),checkout.toString());
+								//DB.getTotalCost(Integer.parseInt(code), checkin.toString(),checkout.toString());
 								confirmationPage(primaryStage,fname,lname,code,bed,checkin,checkout,adults,kids,picked);
 							}
 						});
@@ -676,7 +680,8 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
-				DB.checkDateValid(resCode, arrival.getValue().toString(), departure.getValue().toString());
+				//get roomcode from pramika's db call
+				//DB.checkDateValid(roomCode, arrival.getValue().toString(), departure.getValue().toString(), resCode);
 				//check if different reservation exists in room on dates
 				//check if new occupancy is valid
 				//then confirmation page
