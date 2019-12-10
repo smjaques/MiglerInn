@@ -15,12 +15,14 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.scene.canvas.*;
 import javafx.scene.text.*;
 import javafx.scene.shape.*;
+import javafx.scene.input.*;
 
 
 
@@ -113,6 +115,8 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
+                ArrayList<String> rooms = DB.seeRooms();
+                showRooms(primaryStage, right, rooms);
 				//stay on same page and display rooms on right
 				//call to db dislay list of rooms
 			}
@@ -250,9 +254,30 @@ public class InnReservations extends Application{
 				});		
 			}
 		});
+
+        // REVENUE
+        Button rev = new Button("Revenue");
+		String revIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		String revHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		rev.setStyle(revIdle);
+		rev.setOnMouseEntered(e -> rev.setStyle(revHover));
+		rev.setOnMouseExited(e -> rev.setStyle(revIdle));
+		rev.setLayoutX(140);
+		rev.setLayoutY(300);
+		rev.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+                ArrayList<String> rev = DB.getRev();
+                showRev(primaryStage, right, rev);
+				//stay on same page and display rooms on right
+				//call to db dislay list of rooms
+			}
+		});
 		
-		left.getChildren().addAll(rooms, newRes, changeRes,cancel);
+		left.getChildren().addAll(rooms, newRes, changeRes, cancel, rev);
 		
+        System.out.println("here");
 		primaryStage.setScene(new Scene(screen));
 		primaryStage.setTitle("Migler Inn");
 		primaryStage.show();
@@ -591,7 +616,53 @@ public class InnReservations extends Application{
 		primaryStage.show();
 	}
 	
-	
+    // displays room information
+    public void showRooms(Stage primaryStage, Pane right, ArrayList<String> roomData) {
+        right.getChildren().clear();
+        ScrollPane scrollpane = new ScrollPane();
+
+        scrollpane.setPrefViewportWidth(right.getWidth());
+        scrollpane.setPrefViewportHeight(300);
+        final double minPos = 0;
+        final double maxPos = 100;
+        scrollpane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollpane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+
+        //ArrayList<Text> rooms = new ArrayList<Text>();
+        VBox group = new VBox();
+        for(int i = 0; i < roomData.size(); i++){
+            Label text = new Label(roomData.get(i));
+            text.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18));
+            group.getChildren().add(text);
+        }
+
+    
+        //Text change = new Text(roomData);
+        //change.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18));
+        //scrollpane.setContent(change);
+        scrollpane.setContent(group);
+        right.getChildren().add(scrollpane);
+    
+    }
+
+    public void showRev(Stage primaryStage, Pane right, ArrayList<String> rev){
+       right.getChildren().clear();
+       ScrollPane scrollpane = new ScrollPane();
+       scrollpane.setPrefViewportWidth(right.getWidth());
+       scrollpane.setPrefViewportHeight(300);
+       scrollpane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+       scrollpane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+
+       VBox group = new VBox();
+       for (int i = 0; i < rev.size(); i++) {
+        Label text = new Label(rev.get(i));
+        //text.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18));
+        group.getChildren().add(text);
+       }
+
+       scrollpane.setContent(group);
+       right.getChildren().add(scrollpane);
+    }
 	
 	//Update existing reservation	
 	public void updateRes(Stage primaryStage, Pane left, Pane right, int resCode) {
