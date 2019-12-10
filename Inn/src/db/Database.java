@@ -4,7 +4,6 @@ package db;
 import java.util.*;
 import java.time.LocalDate;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,16 +11,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 
 public class Database {
  	private static Connection con;
  	private static boolean hashTables;
- 	private int MaxOccupancy;
  	
 
  	//getconnection()  		 :  connects to database*
@@ -249,7 +244,7 @@ public class Database {
     }
  	
  	//getMaxOcc()					 :  returns max Occupancy for rooms
- 	public void getMaxOcc() {
+ 	public int getMaxOcc() {
  		int max = 4;
  		String query = "SELECT MAX(MaxOccupancy) FROM Rooms as occupancy";
  		
@@ -259,14 +254,68 @@ public class Database {
         } catch (SQLException e) {
             System.out.println(e);
         }
+        return max;
         
-        MaxOccupancy = max;
  	}
 
  	
-	//newReservation()				 :  inserts new reservation into DB
+		//newReservation()				 :  inserts new reservation into DB
  	//Parameters: Fields from Confirmation Page
- 	public static void newReservation(){
+	 public void newReservation(String fname, String lname, int RoomCode, String checkin, 
+	 									String checkout, int adults, int kids) {
+	
+		int rate;		
+		int code;							
+		String query = "Select rate FROM rooms where RoomCode = ?";
+		try(PreparedStatement prep = con.prepareStatement(query)) {
+			prep.executeUpdate();
+			
+			// get room rate
+			ResultSet res = prep.executeQuery(query);
+			if (res.next()) {
+				rate = res.getInt("rate");
+				
+				// get max reservation code and increment by 1
+				String getCode = "Select max(code) from reservations";
+				try(PreparedStatement prep1 = con.prepareStatement(getCode)) {
+					prep1.executeUpdate();
+					ResultSet res2 = prep1.executeQuery(query);
+					if (res2.next()) {
+						code = res2.getInt("code") + 1;
+						
+						System.out.println("HERE");
+
+						// insert new reservation
+						String addReservation = "INSERT INTO reservations (room, checkin, checkout, rate, lastname, firstname, adults, kids)" +
+									"Values (?, ?, ?, ?, ?, ?, ?, ?, ?)";	
+						try(PreparedStatement prep2 = con.prepareStatement(addReservation)) {
+							prep2.setInt(1, code);
+							prep2.setInt(2, RoomCode);
+							prep2.setString(3, checkin);
+							prep2.setString(4, checkout);
+							prep2.setInt(4, rate);
+							prep2.setString(5, lname);
+							prep2.setString(6, fname);
+							prep2.setInt(7, adults);
+							prep2.setInt(8, kids);
+							prep2.executeUpdate();
+						}
+						
+						catch(SQLException e) {
+							System.out.println(e);
+						}	
+
+					}
+				}
+				catch(SQLException e) {
+					System.out.println(e);
+				}	
+			}
+		}
+		
+		catch(SQLException e) {
+			System.out.println(e);
+		}
 
  	}
  	
@@ -352,33 +401,49 @@ public class Database {
         }
         return false;
  	}
- 	
- 	//getRes()				 :  get reservaton by code
- 	//Parameters: reservation code
- 	public Map<String, String> getRes(int code){
- 		//returns map of result from reservation: 
-        LinkedHashMap<String, String> res = new LinkedHashMap<>();
-
- 		return res;
-
- 	}
-
- 	//updateRes()			 :	updates reservation
- 	//Parameters: what to update, value
- 	public static void updateRes(Integer elapsedTime, String url) {
- 		//delete first res, insert all new one? 
-		
- 	}
 
 
- 	//getReservation()		 :  gets Reservation by resCode
+	public static void updateRes(Integer code, String colName, String value) {
+		String Updatequery = "Update reservations set ? = ? where Code =  ?";
+		try(PreparedStatement pstmt = con.prepareStatement(Updatequery)){
+			pstmt.setInt(1, code);
+			pstmt.setString(2, colName);
+			if (colName == "Adults"){
+				int num = Integer.parseInt(value);
+				pstmt.setInt(3, num);
+			} else{
+				pstmt.setString(3, value);
+			}
+			int rowCount = pstmt.executeUpdate();
+			System.out.format("Updated %d records for %s reservations%n", rowCount, code);
+			} catch (SQLException e) {
+				System.out.println(e);
+			}
+	}
+ 	//getReservation()       :  gets Reservation by resCode
  	//Parameters: resCode
- 	public static Map<String, Integer> getReservation() {
- 		//("FirstName": "Sydney" , "LastName": "Jaques ...)
- 		LinkedHashMap <String, Integer> resInfo = new LinkedHashMap<>();
- 		return resInfo;		
+ 	public LinkedHashMap<String, String> getReservation(int code){
+ 		String query = "Select FirstName, LastName, Room, CheckIn, CheckOut, Adults, Kids from reservations where Code = ?";
+ 		LinkedHashMap <String, String> resInfo = new LinkedHashMap<>();
+ 		try (PreparedStatement prep = con.prepareStatement(query)){
+ 			prep.setInt(1, code);
+ 			ResultSet res = prep.executeQuery(query);
+ 			while (res.next()){
+ 				resInfo.put("FirstName", res.getString("FirstName"));
+ 				resInfo.put("LastName", res.getString("LastName"));
+ 				resInfo.put("Room", res.getString("Room"));
+ 				resInfo.put("CheckIn", res.getString("Checkin"));
+ 				resInfo.put("CheckOut", res.getString("CheckOut"));
+ 				resInfo.put("Adults", res.getString("Adults"));
+ 				resInfo.put("Kids", res.getString("Kids"));
+ 			}
+ 		} catch (SQLException e) {
+			System.out.println(e);
+		}
+ 		return resInfo;
+
  	}
 
-	
- }
+ 	
+}
 

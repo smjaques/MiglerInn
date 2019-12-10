@@ -3,10 +3,10 @@ package ui;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import db.*;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -19,11 +19,9 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
-import javafx.scene.canvas.*;
 import javafx.scene.text.*;
 import javafx.scene.shape.*;
 import javafx.scene.input.*;
-
 
 
 public class InnReservations extends Application{
@@ -132,7 +130,7 @@ public class InnReservations extends Application{
 		newRes.setLayoutX(140);
 		newRes.setLayoutY(120);
 		newRes.setOnAction(new EventHandler<ActionEvent>() {
-			
+
 			@Override
 			public void handle(ActionEvent event) {
 				newReservation(primaryStage);
@@ -433,6 +431,9 @@ public class InnReservations extends Application{
 					//valid = DB.checkDateValid(Integer.parseInt(code), checkin.toString(), checkout.toString(), 00000);
 				}
 				int Y = 90;
+				if(Integer.parseInt(adults)+Integer.parseInt(kids) > DB.getMaxOcc()) {
+					valid = false;
+				}
 				//DB CALL
 				if(!valid) {
 					//"Error: can't make Reservation"
@@ -540,7 +541,18 @@ public class InnReservations extends Application{
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
+				try {
+					DB.dbLogout();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				try {
+					DB.dbLogout();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			    System.exit(0);
+			    
 			}
 		});
 		Text resMsg = new Text(80, 60, "Confirmation");
@@ -571,6 +583,8 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
+				DB.newReservation(fname, lname, Integer.parseInt(code), checkin.toString(),
+						checkout.toString(), Integer.parseInt(adults), Integer.parseInt(kids));
 				//have global list of usernames,passwords. Use this one to sign in.
 				mainMenu(primaryStage);
 			}
@@ -670,7 +684,8 @@ public class InnReservations extends Application{
 		right.getChildren().clear();
 		
 		//make call to database to get all information to display here
-		
+		LinkedHashMap <String, String> resInfo = DB.getReservation(resCode);
+		System.out.println(resInfo.toString());
 		//Change Res
 		Text change = new Text(70, 50, "Reservation : " + resCode);
 		change.setFill(Color.WHITE);
