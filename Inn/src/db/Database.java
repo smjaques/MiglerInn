@@ -3,7 +3,6 @@ package db;
 
 import java.time.LocalDate;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,16 +10,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 
 public class Database {
  	private static Connection con;
  	private static boolean hashTables;
- 	private int MaxOccupancy;
  	
 
  	//getconnection()  		 :  connects to database*
@@ -40,7 +35,7 @@ public class Database {
 
  	//dbLocgout()			 : closes connection to db
  	public void dbLogout() throws SQLException {
- 		//con.close();
+ 		con.close();
  	}
  	
  	//createTable()			 :  creates all database tables (only needs to be called if tables don't exist)
@@ -158,7 +153,7 @@ public class Database {
     }
  	
  	//getMaxOcc()					 :  returns max Occupancy for rooms
- 	public void getMaxOcc() {
+ 	public int getMaxOcc() {
  		int max = 4;
  		String query = "SELECT MAX(MaxOccupancy) FROM Rooms as occupancy";
  		
@@ -168,8 +163,8 @@ public class Database {
         } catch (SQLException e) {
             System.out.println(e);
         }
+        return max;
         
-        MaxOccupancy = max;
  	}
 
  	
