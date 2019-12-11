@@ -245,12 +245,15 @@ public class Database {
  	
  	//getMaxOcc()					 :  returns max Occupancy for rooms
  	public int getMaxOcc() {
- 		int max=0;
- 		String query = "SELECT MAX(MaxOccupancy) FROM Rooms as occupancy";
+ 		int max=4;
+ 		String query = "SELECT MAX(MaxOccupancy) as occupancy FROM Rooms as occupancy";
  		
         try (Statement state = con.createStatement();
              ResultSet res = state.executeQuery(query)) {
+        	if(res.next()) {
                 max = res.getInt("occupancy");
+                return max;
+        	}
         } catch (SQLException e) {
             System.out.println(e);
         }
@@ -261,7 +264,7 @@ public class Database {
  	
 		//newReservation()				 :  inserts new reservation into DB
  	//Parameters: Fields from Confirmation Page
-	 public void newReservation(String fname, String lname, int RoomCode, String checkin, 
+	 public void newReservation(String fname, String lname, String RoomCode, String checkin, 
 	 									String checkout, int adults, int kids) {
 	
 		int rate;		
@@ -290,7 +293,7 @@ public class Database {
 									"Values (?, ?, ?, ?, ?, ?, ?, ?, ?)";	
 						try(PreparedStatement prep2 = con.prepareStatement(addReservation)) {
 							prep2.setInt(1, code);
-							prep2.setInt(2, RoomCode);
+							prep2.setString(2, RoomCode);
 							prep2.setString(3, checkin);
 							prep2.setString(4, checkout);
 							prep2.setInt(4, rate);
@@ -299,21 +302,15 @@ public class Database {
 							prep2.setInt(7, adults);
 							prep2.setInt(8, kids);
 							prep2.executeUpdate();
-						}
-						
-						catch(SQLException e) {
+						} catch(SQLException e) {
 							System.out.println(e);
 						}	
-
 					}
-				}
-				catch(SQLException e) {
+				} catch(SQLException e) {
 					System.out.println(e);
 				}	
 			}
-		}
-		
-		catch(SQLException e) {
+		} catch(SQLException e) {
 			System.out.println(e);
 		}
 
@@ -321,7 +318,6 @@ public class Database {
  	
  	
  	//checkDateValid()				 :  returns boolean of validity of reservation based on dates
-
  	//Parameters: roomCode, checkin, checkout, ResCode
  	public boolean checkDateValid(int RoomCode, String checkin, String checkout, int ResCode) {
 		// check for date conflict
@@ -350,27 +346,93 @@ public class Database {
  	}
  	
  	
+ 	//getSuggestedRooms				 :  get suggested rooms
+ 	//Paramteters: Inputted date from New Reservation page
+ 	public ArrayList<String> getSuggestedRooms(String code,String bed, String checkin, String checkout,int occ){
+ 		
+ 		return new ArrayList<String>();
+ 	}
+ 	
+ 	
  	//getAvailRooms()				 :  gets list of available rooms
  	//Parameters: Info from new res page
- 	public ArrayList<String> getAvailRooms(String code,String bed, LocalDate checkin, LocalDate checkout,int occ) {
+ 	public ArrayList<String> getAvailRooms(String code,String bed, String checkin, String checkout,int occ) {
  		//returns int of number of rooms found, if none found, call another to get 5 suggestions
- 		String codeQuery = "";
- 		String bedQuery = "";
- 		if(!code.equals("any")) {
- 			codeQuery = " AND code= ?";	
+ 		ArrayList<String> finalResult = new ArrayList<>();
+ 		boolean c = false;
+ 		String query = "select * from Reservations res\n" + 
+ 				"join Rooms r on\n" + 
+ 				"    res.Room=r.RoomId\n" + 
+ 				"where ? not between res.checkin and res.checkout\n" + 
+ 				"    and ? not between res.checkin and res.checkout\n" + 
+ 				"    and r.MaxOccupancy <= ?";
+ 		
+ 		if(!code.equalsIgnoreCase("any")) {
+ 			query += " AND res.room= ?";
+ 			c = true;
  		}
  		
- 		if(!bed.equals("any")) {
- 			bedQuery = " AND bedType LIKE ?";
+ 		if(!bed.equals("Any")) 
+ 			query += " AND bedType LIKE '" + bed + "'";
+ 		System.out.println(query);
+ 		try (PreparedStatement prep = con.prepareStatement(query)) {
+            prep.setString(1, checkin);
+            prep.setString(2,  checkout);
+            prep.setInt(3,  occ);            
+            if(c) {
+            	prep.setString(4,  code);
+            }
+            try (ResultSet res = prep.executeQuery()) {
+            	while(res.next()) {
+            		String room = res.getString("RoomName");
+            		if(!finalResult.contains(room))
+            			finalResult.add(res.getString("RoomName"));
+            	}
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        } 
+ 		if(finalResult.size() == 0) {
+ 			finalResult = getSuggestedRooms(code, bed, checkin, checkout, occ);
  		}
-
- 		
- 			
- 		ArrayList<String> rooms = new ArrayList<>();
- 		rooms.add("Abscond or bolster-			$175");
- 		rooms.add("Convoke and sanguine-			$175");
- 		return rooms;
+ 		return finalResult;
  	}
+ 	
+ 	
+ 	//getRoomCode()					 : gets room code
+ 	//Parameters: roomname
+ 	public String getRoomCode(String name) {
+ 		String query = "select roomid from Rooms\n" + 
+ 				"where roomname=?";
+ 		try(PreparedStatement prep = con.prepareStatement(query)){
+ 			prep.setString(1, name);
+ 			try(ResultSet res = prep.executeQuery()){
+ 				if(res.next())
+ 					return res.getString("roomid");
+ 			}
+ 		} catch (SQLException e) {
+ 			System.out.println(e);
+ 		}
+ 		return "";
+ 	}
+
+ 	
+ 	//getBedType()					 : gets bed type from roomname
+ 	//Parameters: roomname
+ 	public String getBedType(String name) {
+ 		String query = "select bedtype from Rooms\n" + 
+ 				"where roomname=?";
+ 		try(PreparedStatement prep = con.prepareStatement(query)){
+ 			prep.setString(1, name);
+ 			try(ResultSet res = prep.executeQuery()){
+ 				if(res.next())
+ 					return res.getString("bedtype");
+ 			}
+ 		} catch (SQLException e) {
+ 			System.out.println(e);
+ 		}
+ 		return ""; 	}
+ 	
  	
  	//getTotalCost()				 :  gets total cost of reservation
  	//Parameters: roomCode, checkin, checkout 
@@ -454,6 +516,13 @@ public class Database {
  		return resInfo;
 
  	}
+ 	
+	//resLookup()			 :  gets list of reservations that match search
+ 	//Parameters: firstname, lastname, list of dates, roomcode, rescode
+ 	public ArrayList<String> resLookup(String fName, String lName, String dates, String roomCode, String resCode){
+ 		return new ArrayList<String>();
+ 	}
+
 
  	
 }

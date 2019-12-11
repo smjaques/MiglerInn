@@ -2,6 +2,7 @@ package ui;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
@@ -11,6 +12,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -254,6 +256,24 @@ public class InnReservations extends Application{
 				});		
 			}
 		});
+		
+		
+		//RESERVATION LOOKUP
+        Button search = new Button("Reservation Lookup");
+		String searchIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		String searchHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		search.setStyle(searchIdle);
+		search.setOnMouseEntered(e -> search.setStyle(searchHover));
+		search.setOnMouseExited(e -> search.setStyle(searchIdle));
+		search.setLayoutX(140);
+		search.setLayoutY(300);
+		search.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				reservationLookup(primaryStage, left, right);
+			}
+		});
 
         // REVENUE
         Button rev = new Button("Revenue");
@@ -263,7 +283,7 @@ public class InnReservations extends Application{
 		rev.setOnMouseEntered(e -> rev.setStyle(revHover));
 		rev.setOnMouseExited(e -> rev.setStyle(revIdle));
 		rev.setLayoutX(140);
-		rev.setLayoutY(300);
+		rev.setLayoutY(360);
 		rev.setOnAction(new EventHandler<ActionEvent>() {
 			
 			@Override
@@ -275,9 +295,8 @@ public class InnReservations extends Application{
 			}
 		});
 		
-		left.getChildren().addAll(rooms, newRes, changeRes, cancel, rev);
+		left.getChildren().addAll(rooms, newRes, changeRes, cancel, search, rev);
 		
-        System.out.println("here");
 		primaryStage.setScene(new Scene(screen));
 		primaryStage.setTitle("Migler Inn");
 		primaryStage.show();
@@ -345,21 +364,14 @@ public class InnReservations extends Application{
 		rCode.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
 		
 		//BedType
-		MenuButton bedType = new MenuButton("Bed Type");
-		MenuItem king = new MenuItem("King");
-		String style = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: lightgrey";
-		String bedHover = "-fx-font: 15 serif; -fx-background-color: darkolivegreen; -fx-text-fill: black;";
-		king.setStyle(style);
-		MenuItem queen = new MenuItem("Queen");
-		queen.setStyle(style);
-		MenuItem any = new MenuItem("Any");
-		any.setStyle(style);
-		bedType.getItems().addAll(king, queen, any);
+		ChoiceBox<String> bedType = new ChoiceBox<>();
+		bedType.setValue("Any");
+		bedType.getItems().addAll("King", "Queen", "Any");
 		bedType.setLayoutX(220);
 		bedType.setLayoutY(140);
 		bedType.setPrefWidth(110);
 		bedType.setStyle("-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: lightgrey");
-		
+
 		//Arrival Date
 		DatePicker arrival = new DatePicker();
 		arrival.setPromptText("Checkin");
@@ -427,12 +439,14 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
+				right.getChildren().clear();
 				//take to confirmation page displaying data 
 				String fname = fName.getText();
 				String lname = lName.getText();
-				String bed = bedType.getText();
-				LocalDate checkin = arrival.getValue();
-				LocalDate checkout = departure.getValue();
+				String bed = bedType.getValue();
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+				String checkinFormat = (arrival.getValue()).format(formatter);
+				String checkoutFormat = (departure.getValue()).format(formatter);
 				String adults = numAdults.getText();
 				String kids = numKids.getText();
 				String code = rCode.getText();
@@ -442,6 +456,7 @@ public class InnReservations extends Application{
 					//get results from getAvailRooms with code entered
 				}
 				int Y = 90;
+				System.out.println(DB.getMaxOcc());
 				if(Integer.parseInt(adults)+Integer.parseInt(kids) > DB.getMaxOcc()) {
 					valid = false;
 				}
@@ -461,7 +476,7 @@ public class InnReservations extends Application{
 					right.getChildren().add(none);
 					left.getChildren().add(resMsg);
 				} else {
-					ArrayList<String> res = DB.getAvailRooms(code, bed, checkin, checkout, Integer.parseInt(adults+kids));
+					ArrayList<String> res = DB.getAvailRooms(code, bed, checkinFormat, checkoutFormat, Integer.parseInt(adults+kids));
 					for(String r : res) {
 						Button option = new Button(r);
 						option.setLayoutY(Y);
@@ -481,9 +496,10 @@ public class InnReservations extends Application{
 							@Override
 							public void handle(ActionEvent event) {
 								String picked = option.getText();
-								picked = picked.split("-")[0];
-								//DB.getTotalCost(Integer.parseInt(code), checkin.toString(),checkout.toString());
-								confirmationPage(primaryStage,fname,lname,code,bed,checkin,checkout,adults,kids,picked);
+								String resCode = DB.getRoomCode(picked);
+								String bedType = DB.getBedType(picked);
+								//DB.getTotalCost(Integer.parseInt(code), checkin,checkout);
+								confirmationPage(primaryStage,fname,lname,resCode,bedType,checkinFormat,checkoutFormat,adults,kids,picked);
 							}
 						});
 					}
@@ -502,7 +518,7 @@ public class InnReservations extends Application{
 
 	//New Reservation Confirmation Page
 	public void confirmationPage(Stage primaryStage,String fname,String lname, String code, String bed, 
-			LocalDate checkin, LocalDate checkout,
+			String checkin, String checkout,
 			String adults, String kids, String roomOption) {
 		
 		
@@ -570,13 +586,13 @@ public class InnReservations extends Application{
 		//"Confirmation"
 		String details = "\n	First Name: " + fname + "\n\n	Last Name: " + lname 
 				+ "\n\n	Room Code: " + code + "\n\n	Bed Type: " + bed 
-				+ "\n\n	Checkin Date: " + String.valueOf(checkin) 
-				+ "\n\n	Checkout Date: " + String.valueOf(checkout)
+				+ "\n\n	Checkin Date: " + checkin 
+				+ "\n\n	Checkout Date: " + checkout
 				+ "\n\n	Adults: " + adults + "\n\n	Kids: " + kids
 				+ "\n\n	Room: " + roomOption;
 		Label confirm = new Label(details);
 		confirm.setStyle("-fx-font: 12 serif; -fx-text-fill: white;");
-		confirm.setLayoutY(100);
+		confirm.setLayoutY(80);
 		confirm.setLayoutX(80);
 			
 		Button con = new Button("Book Reservation");
@@ -591,8 +607,8 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
-				DB.newReservation(fname, lname, Integer.parseInt(code), checkin.toString(),
-						checkout.toString(), Integer.parseInt(adults), Integer.parseInt(kids));
+				DB.newReservation(fname, lname, code, checkin,
+						checkout, Integer.parseInt(adults), Integer.parseInt(kids));
 				//have global list of usernames,passwords. Use this one to sign in.
 				mainMenu(primaryStage);
 			}
@@ -793,6 +809,99 @@ public class InnReservations extends Application{
 		});
 		left.getChildren().addAll(cancel,fName,lName,arrival,departure,numKids,numAdults,
 				submit,change,room);
+	}
+	
+	
+	//reservation lookup
+	public void reservationLookup(Stage primaryStage, Pane left, Pane right) {
+		left.getChildren().clear();
+		right.getChildren().clear();
+		
+		Text title = new Text(50, 70, "Enter Search Criteria");
+		title.setFill(Color.WHITE);
+		title.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 35.0));
+		
+		//Firstname
+		TextField fName = new TextField();
+		fName.setPromptText("First Name");
+		fName.setLayoutX(50);
+		fName.setLayoutY(140);
+		fName.setPrefWidth(130);
+		fName.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		
+		//Lastname
+		TextField lName = new TextField();
+		lName.setPromptText("Last Name");
+		lName.setLayoutX(200);
+		lName.setLayoutY(140);
+		lName.setPrefWidth(130);
+		lName.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		
+		//Arrival Date
+		TextField dates = new TextField();
+		dates.setPromptText("Possible Dates");
+        dates.setLayoutX(50);
+        dates.setLayoutY(200);
+		dates.setPrefWidth(280);
+		dates.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+
+
+        
+        //Roomcode
+        TextField roomCode = new TextField();
+        roomCode.setPromptText("Room Code");
+        roomCode.setLayoutX(50);
+        roomCode.setLayoutY(260);
+        roomCode.setPrefWidth(130);
+		roomCode.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+
+        
+        //Reservationcode
+        TextField resCode = new TextField();
+        resCode.setPromptText("Reservation Code");
+        resCode.setLayoutX(200);
+        resCode.setLayoutY(260);
+        resCode.setPrefWidth(130);
+		resCode.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+
+        
+      
+		//cancel
+		Button cancel = new Button("Cancel");
+		String cancelIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		cancel.setStyle(cancelIdle);
+		String cancelHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		cancel.setOnMouseEntered(e -> cancel.setStyle(cancelHover));
+		cancel.setOnMouseExited(e -> cancel.setStyle(cancelIdle));
+		cancel.setLayoutX(230);
+		cancel.setLayoutY(400);
+		cancel.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				mainMenu(primaryStage);
+			}
+		});
+		
+		//Submit
+		Button submit = new Button("Search");
+		String submitIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		submit.setStyle(submitIdle);
+		String submitHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		submit.setOnMouseEntered(e -> submit.setStyle(submitHover));
+		submit.setOnMouseExited(e -> submit.setStyle(submitIdle));
+		submit.setLayoutX(90);
+		submit.setLayoutY(400);
+		submit.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				DB.resLookup(fName.getText(), lName.getText(), dates.getText(), roomCode.getText(), resCode.getText());
+			}
+		});
+		left.getChildren().addAll(cancel,fName,lName,dates,roomCode,resCode,
+				title,submit);
+		
 	}
 
 
