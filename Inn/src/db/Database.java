@@ -1,6 +1,7 @@
 
 package db;
 
+import java.util.*;
 import java.time.LocalDate;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -25,6 +26,7 @@ public class Database {
         String jdbcUser = System.getenv("HP_JDBC_USER");
         String jdbcPW = System.getenv("HP_JDBC_PW");
         try{
+            System.out.println("Attempting to establish connection...");
             Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPW);
             con = conn;
             System.out.println("Connection established.");
@@ -110,7 +112,7 @@ public class Database {
  	}
 
     //see rooms ordered by popularity
-    public String seeRooms(){
+    public ArrayList<String> seeRooms(){
         String line;
         String query = "";
         try {
@@ -121,35 +123,124 @@ public class Database {
         } catch (Exception e) {
             System.out.println(e);
         }
-        System.out.println(query);
-
-        String result = "\t\tRoom Code\t\tRoom Name\t\tBeds\t\tBed Type" + 
+        ArrayList<String> rooms = new ArrayList<String>();
+        String result = "\tRoom Code\t\tRoom Name\t\t\t\tBeds\t\tBed Type" + 
                         "\t\tMax Occupants\t\tBase Price\t\tDecor" + 
                         "\t\tRoom Popularity\t\tNext Date Available" + 
                         "\t\tMost Recent Stay\t\tMost Recent Checkout\n\n";
+        rooms.add(result);
         try {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
 
             while(rs.next()){
-                result += "\t\t" + rs.getString("RoomCode") + "\t\t";
-                result += rs.getString("RoomName") + "\t\t";
-                result += rs.getString("Beds") + "\t\t";
-                result += rs.getString("bedType") + "\t\t";
-                result += rs.getString("maxOcc") + "\t\t";
-                result += rs.getString("basePrice") + "\t\t";
-                result += rs.getString("decor") + "\t\t";
-                result += rs.getString("Room Popularity") + "\t\t";
-                result += rs.getString("Next Available Check-in Date") + "\t\t";
-                result += rs.getString("Most Recent Stay") + "\t\t";
-                result += rs.getString("Most Recent Checkout") + "\n";
+                String code = rs.getString("RoomCode");
+                String name  = rs.getString("RoomName");
+                String beds = rs.getString("Beds");
+                String bedType = rs.getString("bedType");
+                String maxOcc = rs.getString("maxOcc");
+                String basePrice = rs.getString("basePrice");
+                String decor = rs.getString("decor");
+                String pop = rs.getString("Room Popularity");
+                String nextCheckin = rs.getString("Next Available Check-in Date");
+                String stay = rs.getString("Most Recent Stay");
+                String checkout = rs.getString("Most Recent Checkout");
+                String data = String.format("\t%s\t\t%s\t\t\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" + 
+                                            "\t\t%s\t\t%s\t\t%s\t\t%s", 
+                        code, name, beds, bedType, maxOcc, basePrice, decor, 
+                        pop, nextCheckin, stay, checkout);
+                rooms.add(data);
             }
         } catch (Exception e) {
-            System.out.println("here");
+            System.out.println(e);
+            return rooms;
+        }
+
+        return rooms;
+    }
+
+    public ArrayList<String> getRev(){
+        String line;
+        String query = "";
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("FR6.sql"));
+            while((line = br.readLine()) != null) {
+                query += line + "\n";
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e);
+        }
+        
+        ArrayList<String> revenue = new ArrayList<String>();
+        revenue.add("\tRoom\tJan       Feb       Mar       Apr       May       Jun       " + 
+                    "Jul       Aug       Sep       Oct       Nov       Dec       Year Total\n");
+        try {
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+            String[] mos = {"January", "February", "March", "April", "May", "June",
+                            "July", "August", "September", "October", "November", "December"};
+            float[] mo_rev = new float[12];
+            float year = 0;
+            for (int i = 0; i < 10; i++){
+                HashMap<String, Float> months = new HashMap<String, Float>();
+                float sum = 0;
+                String roomcode = "N/A";
+                for (int j = 0; j < 12; j++){
+                    rs.next();
+                    roomcode = rs.getString("room");
+                    String month = rs.getString("month");
+                    float rev = rs.getFloat("rev");
+                    sum += rev;
+                    months.put(month, rev);
+                    switch (month) {
+                        case "January": mo_rev[0] += rev;
+                                        break;
+                        case "February": mo_rev[1] += rev;
+                                         break;
+                        case "March": mo_rev[2] += rev;
+                                      break;
+                        case "April": mo_rev[3] += rev;
+                                      break;
+                        case "May": mo_rev[4] += rev;
+                                    break;
+                        case "June": mo_rev[5] += rev;
+                                     break;
+                        case "July": mo_rev[6] += rev;
+                                     break;
+                        case "August": mo_rev[7] += rev;
+                                       break;
+                        case "September": mo_rev[8] += rev;
+                                          break;
+                        case "October": mo_rev[9] += rev;
+                                        break;
+                        case "November": mo_rev[10] += rev;
+                                         break;
+                        case "December": mo_rev[11] += rev;
+                                         break;
+                    }
+                }
+
+                String data = String.format("\t%s\t%7.2f   %7.2f   %7.2f   %7.2f   %7.2f   " + 
+                                            "%7.2f   %7.2f   %7.2f   %7.2f   %7.2f   %7.2f   " +
+                                            "%7.2f   %7.2f\n", 
+                    roomcode, months.get(mos[0]), months.get(mos[1]), months.get(mos[2]),
+                    months.get(mos[3]), months.get(mos[4]), months.get(mos[5]), months.get(mos[6]),
+                    months.get(mos[7]), months.get(mos[8]), months.get(mos[9]), 
+                    months.get(mos[10]), months.get(mos[11]), sum);
+                
+                year += sum;
+                revenue.add(data);
+            }
+            revenue.add(String.format("\tAll\t%.2f  %.2f  %.2f  %.2f  %.2f  " + 
+                                    "%.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f\n", 
+                    mo_rev[0], mo_rev[1], mo_rev[2], mo_rev[3], mo_rev[4], mo_rev[5],
+                    mo_rev[6], mo_rev[7], mo_rev[8], mo_rev[9], mo_rev[10], mo_rev[11], year));
+        } catch (Exception e) {
             System.out.println(e);
         }
 
-        return result;
+        return revenue;
     }
  	
  	//getMaxOcc()					 :  returns max Occupancy for rooms
