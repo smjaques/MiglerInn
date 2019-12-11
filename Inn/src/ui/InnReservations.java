@@ -13,6 +13,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
@@ -318,12 +320,20 @@ public class InnReservations extends Application{
 		rCode.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
 		
 		//BedType
-		TextField bedType = new TextField();
-		bedType.setPromptText("Bed Type");
-		bedType.setLayoutX(238);
+		MenuButton bedType = new MenuButton("Bed Type");
+		MenuItem king = new MenuItem("King");
+		String style = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: lightgrey";
+		String bedHover = "-fx-font: 15 serif; -fx-background-color: darkolivegreen; -fx-text-fill: black;";
+		king.setStyle(style);
+		MenuItem queen = new MenuItem("Queen");
+		queen.setStyle(style);
+		MenuItem any = new MenuItem("Any");
+		any.setStyle(style);
+		bedType.getItems().addAll(king, queen, any);
+		bedType.setLayoutX(220);
 		bedType.setLayoutY(140);
-		bedType.setPrefWidth(90);
-		bedType.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		bedType.setPrefWidth(110);
+		bedType.setStyle("-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: lightgrey");
 		
 		//Arrival Date
 		DatePicker arrival = new DatePicker();
@@ -404,12 +414,12 @@ public class InnReservations extends Application{
 				boolean valid = true;
 				if(!code.equalsIgnoreCase("any")) {
 					//valid = DB.checkDateValid(Integer.parseInt(code), checkin.toString(), checkout.toString(), 00000);
+					//get results from getAvailRooms with code entered
 				}
 				int Y = 90;
 				if(Integer.parseInt(adults)+Integer.parseInt(kids) > DB.getMaxOcc()) {
 					valid = false;
 				}
-				//DB CALL
 				if(!valid) {
 					//"Error: can't make Reservation"
 					Text resMsg = new Text(20, 60, "Error: Unable to Make Reservation");
@@ -425,10 +435,8 @@ public class InnReservations extends Application{
 					none.setLayoutY(100);
 					right.getChildren().add(none);
 					left.getChildren().add(resMsg);
-				}
-				else {
-				
-					ArrayList<String> res = DB.getAvailRooms(code,bed,checkin,checkout,Integer.parseInt(adults+kids));
+				} else {
+					ArrayList<String> res = DB.getAvailRooms(code, bed, checkin, checkout, Integer.parseInt(adults+kids));
 					for(String r : res) {
 						Button option = new Button(r);
 						option.setLayoutY(Y);

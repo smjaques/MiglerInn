@@ -154,7 +154,7 @@ public class Database {
  	
  	//getMaxOcc()					 :  returns max Occupancy for rooms
  	public int getMaxOcc() {
- 		int max = 4;
+ 		int max=0;
  		String query = "SELECT MAX(MaxOccupancy) FROM Rooms as occupancy";
  		
         try (Statement state = con.createStatement();
@@ -263,6 +263,17 @@ public class Database {
  	//Parameters: Info from new res page
  	public ArrayList<String> getAvailRooms(String code,String bed, LocalDate checkin, LocalDate checkout,int occ) {
  		//returns int of number of rooms found, if none found, call another to get 5 suggestions
+ 		String codeQuery = "";
+ 		String bedQuery = "";
+ 		if(!code.equals("any")) {
+ 			codeQuery = " AND code= ?";	
+ 		}
+ 		
+ 		if(!bed.equals("any")) {
+ 			bedQuery = " AND bedType LIKE ?";
+ 		}
+
+ 		
  			
  		ArrayList<String> rooms = new ArrayList<>();
  		rooms.add("Abscond or bolster-			$175");
