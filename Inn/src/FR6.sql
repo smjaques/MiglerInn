@@ -1,4 +1,4 @@
-select room, month, sum(rate * nights) from 
+select room, month, sum(rate * nights) as rev from 
     (select * from 
     (select room, rate, monthname(checkin) as month,
     datediff(least(checkout,
@@ -13,3 +13,4 @@ select room, month, sum(rate * nights) from
             from lab7_reservations)) g
     where nights > 0
     group by room, month
+    order by room

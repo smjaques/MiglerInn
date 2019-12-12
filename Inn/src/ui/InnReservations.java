@@ -660,26 +660,76 @@ public class InnReservations extends Application{
         ScrollPane scrollpane = new ScrollPane();
 
         scrollpane.setPrefViewportWidth(right.getWidth());
-        scrollpane.setPrefViewportHeight(300);
-        final double minPos = 0;
-        final double maxPos = 100;
+        scrollpane.setPrefViewportHeight(200);
         scrollpane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollpane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-
-        //ArrayList<Text> rooms = new ArrayList<Text>();
+        
         VBox group = new VBox();
         for(int i = 0; i < roomData.size(); i++){
-            Label text = new Label(roomData.get(i));
-            text.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18));
-            group.getChildren().add(text);
-        }
+            HBox row = new HBox();
+            row.setSpacing(10);
+            String[] temp;
+            temp = roomData.get(i).split("<>");
+            Label room = new Label(temp[0]);
+            room.setPrefWidth(75);
+            room.setMinWidth(75);
+            room.setMaxWidth(75);
 
-    
-        //Text change = new Text(roomData);
-        //change.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18));
-        //scrollpane.setContent(change);
+            Label name = new Label(temp[1]);
+            name.setPrefWidth(175);
+            name.setMinWidth(175);
+            name.setMaxWidth(175);
+
+            Label beds = new Label(temp[2]);
+            beds.setPrefWidth(50);
+            beds.setMinWidth(50);
+            beds.setMaxWidth(50);
+
+            Label bedType = new Label(temp[3]);
+            bedType.setPrefWidth(75);
+            bedType.setMinWidth(75);
+            bedType.setMaxWidth(75);
+
+            Label maxOcc = new Label(temp[4]);
+            maxOcc.setPrefWidth(100);
+            maxOcc.setMinWidth(100);
+            maxOcc.setMaxWidth(100);
+
+            Label price = new Label(temp[5]);
+            price.setPrefWidth(75);
+            price.setMaxWidth(75);
+            price.setMinWidth(75);
+
+            Label decor = new Label(temp[6]);
+            decor.setPrefWidth(75);
+            decor.setMaxWidth(75);
+            decor.setMinWidth(75);
+
+            Label pop = new Label(temp[7]);
+            pop.setPrefWidth(1110);
+            pop.setMinWidth(110);
+            pop.setMaxWidth(110);
+
+            Label date = new Label(temp[8]);
+            date.setPrefWidth(130);
+            date.setMinWidth(130);
+            date.setMaxWidth(130);
+
+            Label nights = new Label(temp[9]);
+            nights.setPrefWidth(120);
+            nights.setMinWidth(120);
+            nights.setMaxWidth(120);
+
+            Label checkout = new Label(temp[10]);
+            checkout.setPrefWidth(150);
+            checkout.setMinWidth(150);
+            checkout.setMaxWidth(150);
+
+            row.getChildren().addAll(room, name, beds, bedType, maxOcc, price, decor, pop, date, nights, checkout);
+            group.getChildren().add(row);
+        }
         scrollpane.setContent(group);
-        right.getChildren().add(scrollpane);
+        right.getChildren().addAll(new VBox(30), scrollpane);
     
     }
 
@@ -693,9 +743,20 @@ public class InnReservations extends Application{
 
        VBox group = new VBox();
        for (int i = 0; i < rev.size(); i++) {
-        Label text = new Label(rev.get(i));
-        //text.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18));
-        group.getChildren().add(text);
+            HBox row = new HBox();
+            String[] temp = rev.get(i).split("<>");
+            int width = 75;
+            for (int j = 0; j < 14; j++) {
+                Label l = new Label(temp[j]);
+                l.setPrefWidth(width);
+                l.setMinWidth(width);
+                l.setMaxWidth(width);
+                row.getChildren().add(l);
+            }
+
+            //Label text = new Label(rev.get(i));
+            //text.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18));
+            group.getChildren().add(row);
        }
 
        scrollpane.setContent(group);
