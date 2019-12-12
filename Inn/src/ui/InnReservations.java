@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.concurrent.TimeUnit;
 
 import db.*;
 import javafx.application.Application;
@@ -439,7 +440,6 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
-				right.getChildren().clear();
 				//take to confirmation page displaying data 
 				String fname = fName.getText();
 				String lname = lName.getText();
@@ -451,13 +451,9 @@ public class InnReservations extends Application{
 				String kids = numKids.getText();
 				String code = rCode.getText();
 				boolean valid = true;
-				if(!code.equalsIgnoreCase("any")) {
-					//valid = DB.checkDateValid(Integer.parseInt(code), checkin.toString(), checkout.toString(), 00000);
-					//get results from getAvailRooms with code entered
-				}
+				
 				int Y = 90;
-				System.out.println(DB.getMaxOcc());
-				if(Integer.parseInt(adults)+Integer.parseInt(kids) > DB.getMaxOcc()) {
+				if((Integer.parseInt(adults)+Integer.parseInt(kids)) > DB.getMaxOcc()) {
 					valid = false;
 				}
 				if(!valid) {
@@ -476,7 +472,8 @@ public class InnReservations extends Application{
 					right.getChildren().add(none);
 					left.getChildren().add(resMsg);
 				} else {
-					ArrayList<String> res = DB.getAvailRooms(code, bed, checkinFormat, checkoutFormat, Integer.parseInt(adults+kids));
+					ArrayList<String> res = DB.getAvailRooms(code, bed, checkinFormat,
+							checkoutFormat, Integer.parseInt(adults)+Integer.parseInt(kids));
 					for(String r : res) {
 						Button option = new Button(r);
 						option.setLayoutY(Y);
@@ -565,16 +562,7 @@ public class InnReservations extends Application{
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
-				try {
-					DB.dbLogout();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-				try {
-					DB.dbLogout();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+				
 			    System.exit(0);
 			    
 			}
@@ -582,10 +570,10 @@ public class InnReservations extends Application{
 		Text resMsg = new Text(80, 60, "Confirmation");
 		resMsg.setFill(Color.WHITE);
 		resMsg.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 35.0));
-	
+		String roomCode = DB.getRoomCode(roomOption);
 		//"Confirmation"
 		String details = "\n	First Name: " + fname + "\n\n	Last Name: " + lname 
-				+ "\n\n	Room Code: " + code + "\n\n	Bed Type: " + bed 
+				+ "\n\n	Room Code: " + roomCode + "\n\n	Bed Type: " + bed 
 				+ "\n\n	Checkin Date: " + checkin 
 				+ "\n\n	Checkout Date: " + checkout
 				+ "\n\n	Adults: " + adults + "\n\n	Kids: " + kids
@@ -594,6 +582,25 @@ public class InnReservations extends Application{
 		confirm.setStyle("-fx-font: 12 serif; -fx-text-fill: white;");
 		confirm.setLayoutY(80);
 		confirm.setLayoutX(80);
+		
+		
+		//cancel
+		Button cancel = new Button("Cancel");
+		String cancelIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
+		cancel.setStyle(cancelIdle);
+		String cancelHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
+		cancel.setOnMouseEntered(e -> cancel.setStyle(cancelHover));
+		cancel.setOnMouseExited(e -> cancel.setStyle(cancelIdle));
+		cancel.setLayoutX(230);
+		cancel.setLayoutY(400);
+		cancel.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				mainMenu(primaryStage);
+			}
+		});
+
 			
 		Button con = new Button("Book Reservation");
 		String conIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
@@ -607,9 +614,15 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
-				DB.addNewReservation(fname, lname, code, checkin,
-						checkout, Integer.parseInt(adults), Integer.parseInt(kids));
-				mainMenu(primaryStage);
+				
+				if(DB.addNewReservation(fname, lname, roomCode, checkin,
+						checkout, Integer.parseInt(adults), Integer.parseInt(kids))) {
+					Text booked = new Text(70, 200,"Reservation booked!");
+					booked.setFill(Color.DARKOLIVEGREEN);
+					booked.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 35.0));
+					right.getChildren().add(booked);
+					left.getChildren().removeAll(con,cancel);
+				}		
 			}
 		});
 
@@ -629,23 +642,7 @@ public class InnReservations extends Application{
 			}
 		});
 
-		//cancel
-		Button cancel = new Button("Cancel");
-		String cancelIdle = "-fx-font: 15 serif; -fx-background-color: white; -fx-text-fill: darkgreen;";
-		cancel.setStyle(cancelIdle);
-		String cancelHover = "-fx-font: 15 serif; -fx-background-color: lightgrey; -fx-text-fill: black;";
-		cancel.setOnMouseEntered(e -> cancel.setStyle(cancelHover));
-		cancel.setOnMouseExited(e -> cancel.setStyle(cancelIdle));
-		cancel.setLayoutX(230);
-		cancel.setLayoutY(400);
-		cancel.setOnAction(new EventHandler<ActionEvent>() {
-			
-			@Override
-			public void handle(ActionEvent event) {
-				mainMenu(primaryStage);
-			}
-		});
-
+		
 		left.getChildren().addAll(confirm,con,cancel,backToMain,resMsg);
 		
 		primaryStage.setScene(new Scene(screen));
@@ -769,64 +766,59 @@ public class InnReservations extends Application{
 		
 		//make call to database to get all information to display here
 		LinkedHashMap <String, String> resInfo = DB.getReservation(resCode);
-		System.out.println(resInfo.toString());
 		//Change Res
 		Text change = new Text(70, 50, "Reservation : " + resCode);
 		change.setFill(Color.WHITE);
 		change.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 30.0));
 		
 		//Room
-		Text room = new Text(80, 100, resInfo.get("Room"));
+		Text room = new Text(90, 100, resInfo.get("RoomName"));
 		room.setFill(Color.WHITE);
 		room.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 20.0));
 		
 		//Firstname
-		TextField fName = new TextField();
-		fName.setPromptText(resInfo.get("FirstName"));
+		TextField fName = new TextField(resInfo.get("FirstName"));
 		fName.setLayoutX(50);
 		fName.setLayoutY(140);
 		fName.setPrefWidth(130);
-		fName.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		fName.setStyle("-fx-background-color: white; -fx-text-fill: black");
 		
 		//Lastname
-		TextField lName = new TextField();
-		lName.setPromptText(resInfo.get("LastName"));
+		TextField lName = new TextField(resInfo.get("LastName"));
 		lName.setLayoutX(200);
 		lName.setLayoutY(140);
 		lName.setPrefWidth(130);
-		lName.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		lName.setStyle("-fx-background-color: white; -fx-text-fill: black");
 		
 		//Arrival Date
 		DatePicker arrival = new DatePicker();
-		arrival.setPromptText(resInfo.get("CheckIn"));
+		arrival.setValue(LocalDate.parse(resInfo.get("CheckIn")));
         arrival.setLayoutX(50);
         arrival.setLayoutY(180);
-		arrival.setShowWeekNumbers(true);
+		arrival.setShowWeekNumbers(false);
 		arrival.setPrefWidth(130);
 	    
         //Departure Date
         DatePicker departure = new DatePicker();
-        departure.setShowWeekNumbers(true);
-        departure.setPromptText(resInfo.get("CheckOut"));
+        departure.setValue(LocalDate.parse(resInfo.get("CheckOut")));
+        departure.setShowWeekNumbers(false);
         departure.setLayoutX(200);
         departure.setLayoutY(180);
         departure.setPrefWidth(130);
         
         //NumChildren
-        TextField numKids = new TextField();
-		numKids.setPromptText(resInfo.get("Kids"));
+        TextField numKids = new TextField(resInfo.get("Kids"));
 		numKids.setLayoutX(50);
 		numKids.setLayoutY(220);
 		numKids.setPrefWidth(60);
-		numKids.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+		numKids.setStyle("-fx-background-color: white; -fx-text-fill: black");
 	     
 		//NumAdults
-        TextField numAdults = new TextField();
-        numAdults.setPromptText(resInfo.get("Adults"));
+        TextField numAdults = new TextField(resInfo.get("Adults"));
         numAdults.setLayoutX(270);
         numAdults.setLayoutY(220);
         numAdults.setPrefWidth(60);
-        numAdults.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
+        numAdults.setStyle("-fx-background-color: white; -fx-text-fill: black");
         
 		//cancel
 		Button cancel = new Button("Cancel");
@@ -858,16 +850,32 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
-				//DB.checkDateValid(resInfo.get("Room"), arrival.getValue().toString(), departure.getValue().toString(), resCode);
-				//check if different reservation exists in room on dates
+				boolean valid = true;
+				valid = DB.checkDateValid(resInfo.get("Room"), arrival.getValue().toString(), 
+						departure.getValue().toString(), resCode);
+				System.out.println("Validity: " + valid);
+				
 				//check if new occupancy is valid
-				if(Integer.parseInt(numAdults.getText()+numKids.getText()) > DB.getMaxOcc()) {
+				if(Integer.parseInt(numAdults.getText())+Integer.parseInt(numKids.getText()) > DB.getMaxOcc())
+					valid = false;
+				
+				if(!valid) {
+					Text error = new Text(50, 200, "Error: Reservation Details Not Valid.");
+					error.setFill(Color.DARKOLIVEGREEN);
+					error.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 20.0));
 					
+					Text again = new Text(80, 240, "Please try again or press cancel.");
+					again.setFill(Color.BLACK);
+					again.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18.0));
+					right.getChildren().clear();
+					right.getChildren().addAll(error,again);
+					//Show error and no confirmation page
+				} else {
+					//then confirmation page
+					confirmationPage(primaryStage,fName.getText(),lName.getText(),
+							String.valueOf(resCode),resInfo.get("BedType"),arrival.getValue().toString(),departure.getValue().toString(),
+							numAdults.getText(),numKids.getText(),resInfo.get("RoomName"));
 				}
-				//then confirmation page
-				confirmationPage(primaryStage,fName.getText(),lName.getText(),
-						String.valueOf(resCode),resInfo.get("BedType"),arrival.getValue().toString(),departure.getValue().toString(),
-						numAdults.getText(),numKids.getText(),resInfo.get("RoomName"));
 
 			}
 		});
@@ -908,8 +916,6 @@ public class InnReservations extends Application{
         dates.setLayoutY(200);
 		dates.setPrefWidth(280);
 		dates.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
-
-
         
         //Roomcode
         TextField roomCode = new TextField();
@@ -918,7 +924,6 @@ public class InnReservations extends Application{
         roomCode.setLayoutY(260);
         roomCode.setPrefWidth(130);
 		roomCode.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
-
         
         //Reservationcode
         TextField resCode = new TextField();
@@ -927,8 +932,7 @@ public class InnReservations extends Application{
         resCode.setLayoutY(260);
         resCode.setPrefWidth(130);
 		resCode.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
-
-        
+		
       
 		//cancel
 		Button cancel = new Button("Cancel");

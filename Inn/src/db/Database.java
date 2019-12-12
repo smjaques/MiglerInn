@@ -40,58 +40,11 @@ public class Database {
  		con.close();
  	}
  	
- 	//createTable()			 :  creates all database tables (only needs to be called if tables don't exist)
- 	public static void createTables(){
- 		if(!hashTables) {
- 			try (Statement state = con.createStatement()) {
- 				String createRooms = "CREATE TABLE IF NOT EXISTS lab7_rooms (\n" + 
- 						"  RoomCode char(5) PRIMARY KEY,\n" + 
- 						"  RoomName varchar(30) NOT NULL,\n" + 
- 						"  Beds int(11) NOT NULL,\n" + 
- 						"  bedType varchar(8) NOT NULL,\n" + 
- 						"  maxOcc int(11) NOT NULL,\n" + 
- 						"  basePrice DECIMAL(6,2) NOT NULL,\n" + 
- 						"  decor varchar(20) NOT NULL,\n" + 
- 						"  UNIQUE (RoomName)\n" + 
- 						");";
- 				state.executeUpdate(createRooms);
- 				
- 				String createRes = "CREATE TABLE IF NOT EXISTS lab7_reservations (\n" + 
- 						"  CODE int(11) PRIMARY KEY,\n" + 
- 						"  Room char(5) NOT NULL,\n" + 
- 						"  CheckIn date NOT NULL,\n" + 
- 						"  Checkout date NOT NULL,\n" + 
- 						"  Rate DECIMAL(6,2) NOT NULL,\n" + 
- 						"  LastName varchar(15) NOT NULL,\n" + 
- 						"  FirstName varchar(15) NOT NULL,\n" + 
- 						"  Adults int(11) NOT NULL,\n" + 
- 						"  Kids int(11) NOT NULL,\n" + 
- 						"  UNIQUE (Room, CheckIn),\n" + 
- 						"  UNIQUE (Room, Checkout),\n" + 
- 						"  FOREIGN KEY (Room) REFERENCES lab7_rooms (RoomCode)\n" + 
- 						");";
- 				state.executeUpdate(createRes);
- 				
- 				String insertRooms = " INSERT INTO lab7_rooms SELECT * FROM INN.rooms;";
- 				state.executeUpdate(insertRooms);
- 				
- 				String insertRes = "INSERT INTO lab7_reservations SELECT CODE, Room,\n" + 
- 						"   DATE_ADD(CheckIn, INTERVAL 9 YEAR),\n" + 
- 						"   DATE_ADD(Checkout, INTERVAL 9 YEAR)\n" + 
- 						"   Rate, LastName, FirstName, Adults, Kids FROM INN.reservations;";
- 				state.executeUpdate(insertRes);
- 			} catch (SQLException e) {
- 				System.out.println(e);
- 			}
- 		}
- 		hashTables = true;
- 	}
- 	
  	
  	//get all reservations today
  	public String getTodayRes(LocalDate today) {
-        String sql = "SELECT FirstName, LastName, Room FROM lab7_reservations " + 
-                     "WHERE CheckIn < CURDATE() AND Checkout > CURDATE()";
+        String sql = "SELECT FirstName, LastName,Room\n" + 
+        		" FROM Reservations WHERE CheckIn <= date(now()) AND Checkout > date(now())";
         
         String result = "\t\tFirst Name\t\tLastName\t\tRoomCode\n\n";
         try {
@@ -99,8 +52,8 @@ public class Database {
             ResultSet rs = stmt.executeQuery(sql);
 
             while(rs.next()){
-                result += "\t\t" + rs.getString("FirstName") + "\t\t";
-                result += rs.getString("LastName") + "\t\t";
+                result += "\t\t" + rs.getString("FirstName") + "\t\t\t";
+                result += rs.getString("LastName") + "\t\t\t";
                 result += rs.getString("Room") + "\n";
             }
         } catch (Exception e) {
@@ -265,72 +218,77 @@ public class Database {
  	
 	//addNewReservation()				 :  inserts new reservation into DB
  	//Parameters: Fields from Confirmation Page
-	public void addNewReservation(String fname, String lname, String RoomCode, String checkin, 
+	public boolean addNewReservation(String fname, String lname, String RoomCode, String checkin, 
 	 									String checkout, int adults, int kids) {
 	
 		int rate;		
 		int code;							
-		String query = "Select rate FROM rooms where RoomCode = ?";
+		String query = "Select BasePrice FROM Rooms where RoomId = ?";
 		try(PreparedStatement prep = con.prepareStatement(query)) {
-			prep.executeUpdate();
-			
+			prep.setString(1, RoomCode);			
 			// get room rate
-			ResultSet res = prep.executeQuery(query);
+			ResultSet res = prep.executeQuery();
 			if (res.next()) {
-				rate = res.getInt("rate");
+				rate = res.getInt("BasePrice");
 				
 				// get max reservation code and increment by 1
-				String getCode = "Select max(code) from reservations";
+				String getCode = "Select max(Code) code from Reservations";
 				try(PreparedStatement prep1 = con.prepareStatement(getCode)) {
-					prep1.executeUpdate();
-					ResultSet res2 = prep1.executeQuery(query);
+					ResultSet res2 = prep1.executeQuery();
 					if (res2.next()) {
 						code = res2.getInt("code") + 1;
 						
-						System.out.println("HERE");
 
 						// insert new reservation
-						String addReservation = "INSERT INTO reservations (room, checkin, checkout, rate, lastname, firstname, adults, kids)" +
+						String addReservation = "INSERT INTO Reservations (Code, Room, CheckIn, CheckOut, Rate, LastName, FirstName, Adults, Kids)" +
 									"Values (?, ?, ?, ?, ?, ?, ?, ?, ?)";	
 						try(PreparedStatement prep2 = con.prepareStatement(addReservation)) {
 							prep2.setInt(1, code);
 							prep2.setString(2, RoomCode);
 							prep2.setString(3, checkin);
 							prep2.setString(4, checkout);
-							prep2.setInt(4, rate);
-							prep2.setString(5, lname);
-							prep2.setString(6, fname);
-							prep2.setInt(7, adults);
-							prep2.setInt(8, kids);
+							prep2.setInt(5, rate);
+							prep2.setString(6, lname);
+							prep2.setString(7, fname);
+							prep2.setInt(8, adults);
+							prep2.setInt(9, kids);
 							prep2.executeUpdate();
 						} catch(SQLException e) {
 							System.out.println(e);
+							return false;
 						}	
 					}
 				} catch(SQLException e) {
 					System.out.println(e);
+					return false;
 				}	
 			}
 		} catch(SQLException e) {
 			System.out.println(e);
+			return false;
 		}
-
+		return true;
  	}
  	
  	
  	//checkDateValid()				 :  returns boolean of validity of reservation based on dates
  	//Parameters: roomCode, checkin, checkout, ResCode
- 	public boolean checkDateValid(int RoomCode, String checkin, String checkout, int ResCode) {
+ 	public boolean checkDateValid(String RoomCode, String checkin, String checkout, int ResCode) {
 		// check for date conflict
-		String query = "Select checkin, checkout FROM Reservations WHERE code = ?" +
-			" AND (? between checkin and checkout OR ? between checkin and checkout) AND <> ?";
+		String query = "Select * from Reservations res where \n" + 
+				" 	res.Room=? and\n" + 
+				" 	res.Code != ? and \n" + 
+				" 	(? between Checkin and Checkout)\n" + 
+				" 	OR \n" + 
+				" 	(? between Checkin and Checkout)";
 		
 		try(PreparedStatement prep = con.prepareStatement(query);
 			ResultSet res = prep.executeQuery(query)){
-			prep.setInt(1, RoomCode);
-			prep.setString(2, checkin);
-			prep.setString(3, checkout);
-			prep.setInt(4, ResCode);
+			prep.setString(1, RoomCode);
+			prep.setInt(2, ResCode);
+			prep.setString(3, checkin);
+			prep.setString(4, checkout);
+			System.out.println(prep);
 			prep.executeUpdate();
 
 			if(res.next() == false) {
@@ -361,12 +319,15 @@ public class Database {
  		//returns int of number of rooms found, if none found, call another to get 5 suggestions
  		ArrayList<String> finalResult = new ArrayList<>();
  		boolean c = false;
- 		String query = "select * from Reservations res\n" + 
- 				"join Rooms r on\n" + 
- 				"    res.Room=r.RoomId\n" + 
- 				"where ? not between res.checkin and res.checkout\n" + 
- 				"    and ? not between res.checkin and res.checkout\n" + 
- 				"    and r.MaxOccupancy <= ?";
+ 		String query = "select distinct RoomName from Reservations res join Rooms r on \n" + 
+ 				"    res.Room = r.roomid" +
+ 				"	where Room not in \n" + 
+ 				"    (\n" + 
+ 				"    select Room from Reservations where ? \n" +
+ 				"         between Checkin and Checkout OR ? \n" +
+ 				"         between Checkin and Checkout\n" + 
+ 				"    ) " +
+ 				"    and MaxOccupancy >= ?";
  		
  		if(!code.equalsIgnoreCase("any")) {
  			query += " AND res.room= ?";
@@ -385,8 +346,7 @@ public class Database {
             try (ResultSet res = prep.executeQuery()) {
             	while(res.next()) {
             		String room = res.getString("RoomName");
-            		if(!finalResult.contains(room))
-            			finalResult.add(res.getString("RoomName"));
+            		finalResult.add(room);
             	}
             }
         } catch (SQLException e) {
@@ -436,7 +396,7 @@ public class Database {
  	
  	//getTotalCost()				 :  gets total cost of reservation
  	//Parameters: roomCode, checkin, checkout 
- 	public double getTotalCost(int code, String checkin,String checkout) {
+ 	public double getTotalCost(String code, String checkin,String checkout) {
  		//Number of weekdays multipled by room base rate
  		//Number of weekend days multiplied by 110% of the room base rate
  		//An 18% tourism tax applied to the total of the above two calculations
@@ -496,9 +456,7 @@ public class Database {
  	//getReservation()       :  gets Reservation by resCode
  	//Parameters: resCode
  	public LinkedHashMap<String, String> getReservation(int code){
- 		String query = "Select * from Reservations res\n" + 
- 				"join Rooms r on \n" + 
- 				"    res.Room=r.RoomId where Code = ?";
+ 		String query = "Select * from Reservations res join Rooms r on res.Room=r.RoomId where Code = ?";
  		LinkedHashMap <String, String> resInfo = new LinkedHashMap<>();
  		try (PreparedStatement prep = con.prepareStatement(query)){
  			prep.setInt(1, code);
@@ -511,6 +469,8 @@ public class Database {
  				resInfo.put("CheckOut", res.getString("CheckOut"));
  				resInfo.put("Adults", res.getString("Adults"));
  				resInfo.put("Kids", res.getString("Kids"));
+ 				resInfo.put("BedType", res.getString("BedType"));
+ 				resInfo.put("RoomName", res.getString("RoomName"));
  			}
  		} catch (SQLException e) {
 			System.out.println(e);
@@ -522,6 +482,7 @@ public class Database {
 	//resLookup()			 :  gets list of reservations that match search
  	//Parameters: firstname, lastname, list of dates, roomcode, rescode
  	public ArrayList<String> resLookup(String fName, String lName, String dates, String roomCode, String resCode){
+ 		System.out.println(fName);
  		return new ArrayList<String>();
  	}
 
