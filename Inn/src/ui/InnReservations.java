@@ -815,7 +815,7 @@ public class InnReservations extends Application{
         
         //NumChildren
         TextField numKids = new TextField();
-		numKids.setPromptText("Kids");
+		numKids.setPromptText(resInfo.get("Kids"));
 		numKids.setLayoutX(50);
 		numKids.setLayoutY(220);
 		numKids.setPrefWidth(60);
@@ -823,7 +823,7 @@ public class InnReservations extends Application{
 	     
 		//NumAdults
         TextField numAdults = new TextField();
-        numAdults.setPromptText("Adults");
+        numAdults.setPromptText(resInfo.get("Adults"));
         numAdults.setLayoutX(270);
         numAdults.setLayoutY(220);
         numAdults.setPrefWidth(60);
@@ -866,6 +866,10 @@ public class InnReservations extends Application{
 					
 				}
 				//then confirmation page
+				confirmationPage(primaryStage,fName.getText(),lName.getText(),
+						String.valueOf(resCode),resInfo.get("BedType"),arrival.getValue().toString(),departure.getValue().toString(),
+						numAdults.getText(),numKids.getText(),resInfo.get("RoomName"));
+
 			}
 		});
 		left.getChildren().addAll(cancel,fName,lName,arrival,departure,numKids,numAdults,

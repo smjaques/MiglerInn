@@ -521,7 +521,9 @@ public class Database {
  	//getReservation()       :  gets Reservation by resCode
  	//Parameters: resCode
  	public LinkedHashMap<String, String> getReservation(int code){
- 		String query = "Select FirstName, LastName, Room, CheckIn, CheckOut, Adults, Kids from Reservations where Code = ?";
+ 		String query = "Select * from Reservations res\n" + 
+ 				"join Rooms r on \n" + 
+ 				"    res.Room=r.RoomId where Code = ?";
  		LinkedHashMap <String, String> resInfo = new LinkedHashMap<>();
  		try (PreparedStatement prep = con.prepareStatement(query)){
  			prep.setInt(1, code);
