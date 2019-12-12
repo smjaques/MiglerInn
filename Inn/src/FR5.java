@@ -8,7 +8,7 @@
 // put all the info in an array; assuming there are empty
 public static String req5(String fName, String lName, String checkIndates, String checkOutdates, String roomCode, String resCode){
 
-	    String[] inputs = {fName, lName, checkIndates, checkOutdates, roomCode, resCode}
+	    String[] inputs = {fName, lName, checkIndates, checkOutdates, roomCode, resCode};
 		int numNull = 0;
 
 		for(int i = 0; i < 6; i++){
