@@ -156,18 +156,6 @@ public class Database {
             return rooms;
         }
 
-        /*rooms.add("Room Code<>Room Name<>Beds<>Bed Type<>Max Occupants<>Base Price<>Decor<>Room Popularity<>Next Date Available<>Most Recent Stay<>Most Recent Checkout\n");
-        rooms.add("CAS<>Convoke and sanguine<>2<>King<>4<>175.00<>traditional<>0.76<>2020-01-08<>4<>2019-12-09\n");
-        rooms.add("IBD<>Immutable before decorum<>2<>Queen<>4<>150.00<>rustic<>0.76<>2020-01-01<>6<>2019-12-06\n");
-        rooms.add("AOB<>Abscond or bolster<>2<>Queen<>4<>175.00<>traditional<>0.74<>2019-12-22<>2<>2019-12-10\n");
-        rooms.add("TAA<>Thrift and accolade<>1<>Double<>2<>75.00<>modern<>0.74<>2019-12-18<>2<>2019-11-30\n");
-        rooms.add("RND<>Recluse and defiance<>1<>King<>2<>150.00<>modern<>0.73<>2019-12-14<>1<>2019-12-09\n");
-        rooms.add("HBB<>Harbinger but bequest<>1<>Queen<>2<>100.00<>modern<>0.69<>2019-12-19<>2<>2019-12-09\n");
-        rooms.add("IBS<>Interim but salutary<>1<>King<>2<>150.00<>traditional<>0.66<>2019-12-14<>2<>2019-12-08\n");
-        rooms.add("MWC<>Mendicant with cryptic<>2<>Double<>4<>125.00<>modern<>0.64<>2019-12-17<>3<>2019-12-02\n");
-        rooms.add("FNA<>Frugal not apropos<>2<>King<>4<>250.00<>traditional<>0.62<>2019-12-20<>5<>2019-12-08\n");
-        rooms.add("RTE<>Riddle to exculpate<>2<>Queen<>4<>175.00<>rustic<>0.57<>2019-12-19<>2<>2019-12-02\n");*/
-
         return rooms;
     }
 
@@ -233,7 +221,7 @@ public class Database {
                     }
                 }
 
-                String data = String.format("<>%s<>%7.2f<>%7.2f<>%7.2f<>%7.2f<>%7.2f<>" + 
+                String data = String.format("%s<>%7.2f<>%7.2f<>%7.2f<>%7.2f<>%7.2f<>" + 
                                             "%7.2f<>%7.2f<>%7.2f<>%7.2f<>%7.2f<>%7.2f<>" +
                                             "%7.2f<>%7.2f", 
                     roomcode, months.get(mos[0]), months.get(mos[1]), months.get(mos[2]),
@@ -252,19 +240,6 @@ public class Database {
             System.out.println(e);
         }
 
-
-        /*revenue.add("Room<>Jan<>Feb<>Mar<>Apr<>May<>Jun<>Jul<>Aug<>Sep<>Oct<>Nov<>Dec<>Year Total\n");
-        revenue.add("AOB<>3491.25<>1933.75<>2415.00<>2476.25<>1863.75<>7166.25<>5127.50<>3080.00<>3858.75<>3736.25<>2047.50<>4567.50<>41763.75\n");
-        revenue.add("CAS<>3797.50<>4025.00<>4655.00<>1828.75<>2607.50<>4051.25<>4147.50<>3718.75<>3080.00<>1216.25<>3263.75<>1986.25<>38377.50\n");
-        revenue.add("FNA<>3825.00<>4137.50<>4400.00<>3237.50<>6162.50<>6775.00<>3712.50<>2500.00<>2100.00<>3200.00<>5075.00<>5025.00<>50150.00\n");
-        revenue.add("HBB<>2100.00<>1205.00<> 825.00<>2445.00<>1935.00<>1735.00<>2310.00<>2040.00<>1955.00<>1310.00<>1285.00<>2030.00<>21175.00\n");
-        revenue.add("IBD<>4477.50<>3007.50<>1245.00<>3082.50<>2820.00<>1882.50<>2962.50<>3592.50<>1162.50<>3465.00<>2692.50<>4387.50<>34777.50\n");
-        revenue.add("IBS<>2587.50<>3330.00<>4042.50<>1455.00<>1837.50<> 667.50<>2040.00<>3045.00<>2910.00<>2257.50<>3825.00<>2707.50<>30705.00\n");
-        revenue.add("MWC<>1781.25<>1487.50<>1662.50<>1406.25<>3537.50<>2593.75<>1993.75<>3287.50<> 562.50<>2675.00<>1537.50<>1912.50<>24437.50\n");
-        revenue.add("RND<>2385.00<> 847.50<>3330.00<>2250.00<>2085.00<>4312.50<>1545.00<>1612.50<>3097.50<>4410.00<>2512.50<>2602.50<>30990.00\n");
-        revenue.add("RTE<>3071.25<>2738.75<>2546.25<>4392.50<>3115.00<>1855.00<>2957.50<>3552.50<>2152.50<>2310.00<>1128.75<>2030.00<>31850.00\n");
-        revenue.add("TAA<>2178.75<>1275.00<>1113.75<>1368.75<>1297.50<>2370.00<>1485.00<>1972.50<> 956.25<> 817.50<> 960.00<>1440.00<>17235.00\n");
-        revenue.add("All<>29695.00<>23987.50<>26235.00<>23942.50<>27261.25<>33408.75<>28281.25<>28401.25<>21835.00<>25397.50<>24327.50<>28688.75<>321461.25\n");*/
 
         return revenue;
     }
