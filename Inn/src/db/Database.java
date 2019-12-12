@@ -374,7 +374,6 @@ public class Database {
  		
  		if(!bed.equals("Any")) 
  			query += " AND bedType LIKE '" + bed + "'";
- 		System.out.println(query);
  		try (PreparedStatement prep = con.prepareStatement(query)) {
             prep.setString(1, checkin);
             prep.setString(2,  checkout);
@@ -446,9 +445,9 @@ public class Database {
  	
  	//deleteReservation()			 :	deletes reservation
  	//Parameters: reservation code
- 	public void deleteRes(String rCode){
+ 	public void deleteRes(int rCode){
  		try (PreparedStatement prep = con.prepareStatement("DELETE FROM Reservations WHERE Code=?")){
- 			prep.setString(1, rCode);
+ 			prep.setInt(1, rCode);
  			prep.executeUpdate();
  		} catch (SQLException e) {
  			System.out.println(e);
@@ -496,12 +495,12 @@ public class Database {
  	//getReservation()       :  gets Reservation by resCode
  	//Parameters: resCode
  	public LinkedHashMap<String, String> getReservation(int code){
- 		String query = "Select FirstName, LastName, Room, CheckIn, CheckOut, Adults, Kids from reservations where Code = ?";
+ 		String query = "Select FirstName, LastName, Room, CheckIn, CheckOut, Adults, Kids from Reservations where Code = ?";
  		LinkedHashMap <String, String> resInfo = new LinkedHashMap<>();
  		try (PreparedStatement prep = con.prepareStatement(query)){
  			prep.setInt(1, code);
- 			ResultSet res = prep.executeQuery(query);
- 			while (res.next()){
+ 			ResultSet res = prep.executeQuery();
+ 			if (res.next()){
  				resInfo.put("FirstName", res.getString("FirstName"));
  				resInfo.put("LastName", res.getString("LastName"));
  				resInfo.put("Room", res.getString("Room"));

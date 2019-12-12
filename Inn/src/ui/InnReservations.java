@@ -246,7 +246,7 @@ public class InnReservations extends Application{
 								right.getChildren().add(error);
 							}
 							else {
-								DB.deleteRes(rCode.toString());
+								DB.deleteRes(rCode);
 							}
 						} catch (SQLException e) {
 							// TODO Auto-generated catch block
@@ -716,23 +716,21 @@ public class InnReservations extends Application{
 		change.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 30.0));
 		
 		//Room
-		Text room = new Text(80, 100, "Room : Abscond or bolster");
+		Text room = new Text(80, 100, resInfo.get("Room"));
 		room.setFill(Color.WHITE);
 		room.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 20.0));
 		
 		//Firstname
 		TextField fName = new TextField();
-		fName.setPromptText("First Name");
+		fName.setPromptText(resInfo.get("FirstName"));
 		fName.setLayoutX(50);
 		fName.setLayoutY(140);
 		fName.setPrefWidth(130);
 		fName.setStyle("-fx-background-color: white; -fx-text-fill: darkgreen");
-		//fName.setText(value);
-		//value = result from map('Firstname');
 		
 		//Lastname
 		TextField lName = new TextField();
-		lName.setPromptText("Last Name");
+		lName.setPromptText(resInfo.get("LastName"));
 		lName.setLayoutX(200);
 		lName.setLayoutY(140);
 		lName.setPrefWidth(130);
@@ -740,7 +738,7 @@ public class InnReservations extends Application{
 		
 		//Arrival Date
 		DatePicker arrival = new DatePicker();
-		arrival.setPromptText("Checkin");
+		arrival.setPromptText(resInfo.get("CheckIn"));
         arrival.setLayoutX(50);
         arrival.setLayoutY(180);
 		arrival.setShowWeekNumbers(true);
@@ -749,7 +747,7 @@ public class InnReservations extends Application{
         //Departure Date
         DatePicker departure = new DatePicker();
         departure.setShowWeekNumbers(true);
-        departure.setPromptText("Checkout");
+        departure.setPromptText(resInfo.get("CheckOut"));
         departure.setLayoutX(200);
         departure.setLayoutY(180);
         departure.setPrefWidth(130);
@@ -800,10 +798,12 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
-				//get roomcode from pramika's db call
-				//DB.checkDateValid(roomCode, arrival.getValue().toString(), departure.getValue().toString(), resCode);
+				//DB.checkDateValid(resInfo.get("Room"), arrival.getValue().toString(), departure.getValue().toString(), resCode);
 				//check if different reservation exists in room on dates
 				//check if new occupancy is valid
+				if(Integer.parseInt(numAdults.getText()+numKids.getText()) > DB.getMaxOcc()) {
+					
+				}
 				//then confirmation page
 			}
 		});
