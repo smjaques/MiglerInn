@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.concurrent.TimeUnit;
 
 import db.*;
 import javafx.application.Application;
@@ -16,8 +15,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ScrollPane;
@@ -25,8 +22,6 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.scene.text.*;
-import javafx.scene.shape.*;
-import javafx.scene.input.*;
 
 
 public class InnReservations extends Application{
@@ -58,8 +53,7 @@ public class InnReservations extends Application{
 		today.setFill(Color.DARKOLIVEGREEN);
 		today.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 32.0));
 		
-        LocalDate localDate = LocalDate.now();
-        String res = DB.getTodayRes(localDate);
+        String res = DB.getTodayRes();
         Label curRes = new Label(res);
         curRes.setFont(Font.font(String.valueOf(java.awt.Font.SERIF)));
         curRes.setLayoutY(70);
@@ -223,7 +217,6 @@ public class InnReservations extends Application{
 				enterResCode.setLayoutY(181);
 				
 		        right.getChildren().clear();
-				// user enters reservation code on right
 				
 				Button search = new Button("Search");
 				String searchIdle = "-fx-font: 15 serif; -fx-background-color: darkgrey; -fx-text-fill: black;";
@@ -248,6 +241,12 @@ public class InnReservations extends Application{
 							}
 							else {
 								DB.deleteRes(rCode);
+								Text deleted = new Text(20, 200,"Successfully deleted Reservation " + rCode);
+								deleted.setFill(Color.DARKOLIVEGREEN);
+								deleted.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18.0));
+								right.getChildren().clear();
+								right.getChildren().add(deleted);
+								
 							}
 						} catch (SQLException e) {
 							// TODO Auto-generated catch block
@@ -474,6 +473,11 @@ public class InnReservations extends Application{
 				} else {
 					ArrayList<String> res = DB.getAvailRooms(code, bed, checkinFormat,
 							checkoutFormat, Integer.parseInt(adults)+Integer.parseInt(kids));
+					if(res.size() == 0) {
+						res = DB.getSuggestedRooms(code, bed,
+								checkinFormat, checkoutFormat, Integer.parseInt(adults)+Integer.parseInt(kids));
+						//set new dates?
+					}
 					for(String r : res) {
 						Button option = new Button(r);
 						option.setLayoutY(Y);
@@ -851,7 +855,7 @@ public class InnReservations extends Application{
 			@Override
 			public void handle(ActionEvent event) {
 				boolean valid = true;
-				valid = DB.checkDateValid(resInfo.get("Room"), arrival.getValue().toString(), 
+				valid = DB.checkUpdateValid(resInfo.get("Room"), arrival.getValue().toString(), 
 						departure.getValue().toString(), resCode);
 				System.out.println("Validity: " + valid);
 				
@@ -911,7 +915,7 @@ public class InnReservations extends Application{
 		
 		//Arrival Date
 		TextField dates = new TextField();
-		dates.setPromptText("Possible Dates");
+		dates.setPromptText("Possible Dates (separated by ',')");
         dates.setLayoutX(50);
         dates.setLayoutY(200);
 		dates.setPrefWidth(280);
@@ -964,17 +968,45 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
-				DB.resLookup(fName.getText(), lName.getText(), dates.getText(), roomCode.getText(), resCode.getText());
+				right.getChildren().clear();
+				ArrayList<String> results = DB.resLookup(fName.getText(), 
+						lName.getText(), dates.getText(), roomCode.getText(), resCode.getText());
+				
+				Label matchingTitle = new Label("Matching Rooms: ");
+				matchingTitle.setLayoutX(80);
+				matchingTitle.setLayoutY(30);
+				matchingTitle.setStyle("-fx-font: 30 serif; -fx-text-fill: darkgrey;");
+				
+		       ScrollPane scrollpane = new ScrollPane();
+		       scrollpane.setPrefViewportWidth(right.getWidth());
+		       scrollpane.setPrefViewportHeight(300);
+		       scrollpane.setLayoutY(90);
+		       scrollpane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+		       scrollpane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+		       
+		       VBox group = new VBox();
+		       for (String s : results) {
+		            HBox row = new HBox();
+		            String[] temp = s.split("<>");
+		            String w = "100,100,245,150,170,130,145,135,110,90";
+		            String[] widths = w.split(",");
+		            for (int j = 0; j < 10; j++) {
+		                Label l = new Label(temp[j]);
+		                l.setStyle("-fx-font: 14 serif;");
+		                l.setPrefWidth(Integer.parseInt(widths[j]));
+		                l.setMinWidth(Integer.parseInt(widths[j]));
+		                l.setMaxWidth(Integer.parseInt(widths[j]));
+		                row.getChildren().add(l);
+		            }
+		            group.getChildren().add(row);
+		       }
+		       scrollpane.setContent(group);
+		       right.getChildren().addAll(matchingTitle,scrollpane);
 			}
 		});
 		left.getChildren().addAll(cancel,fName,lName,dates,roomCode,resCode,
 				title,submit);
-		
 	}
-
-
-	
-	
 	
 	
 	
