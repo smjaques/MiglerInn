@@ -671,7 +671,7 @@ public class InnReservations extends Application{
 				+ "\n\n	Total Cost: " + DB.getTotalCost(roomCode, checkin, checkout);
 		Label confirm = new Label(details);
 		confirm.setStyle("-fx-font: 12 serif; -fx-text-fill: white;");
-		confirm.setLayoutY(80);
+		confirm.setLayoutY(70);
 		confirm.setLayoutX(80);
 		
 		

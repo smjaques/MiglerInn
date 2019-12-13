@@ -93,7 +93,6 @@ public class Database {
  	public String getTodayRes() {
         String sql = "SELECT FirstName, LastName,Room\n" + 
         		" FROM lab7_reservations WHERE CheckIn <= date(now()) AND Checkout > date(now())";
-        System.out.println(sql);
         String result = "\t\tFirst Name\t\tLastName\t\tRoomCode\n\n";
         try {
             Statement stmt = con.createStatement();
@@ -107,7 +106,6 @@ public class Database {
         } catch (Exception e) {
             return "";
         }
-        System.out.println(result);
         return result;
  	}
 
@@ -324,7 +322,7 @@ public class Database {
 		String query = "Select * from lab7_reservations res where \n" + 
 				" 	res.Room=? and\n" + 
 				" 	res.Code != ? and \n" + 
-				" 	Checkin <= ? AND CheckOut > ?";
+				" 	Checkin <= ? AND CheckOut >= ?";
 		try(PreparedStatement prep = con.prepareStatement(query)){
 			prep.setString(1, RoomCode);
 			prep.setInt(2, ResCode);
@@ -349,7 +347,9 @@ public class Database {
  	//Paramteters: Inputted date from New Reservation page
  	public ArrayList<String> getSuggestedRooms(String code,String bed, String checkin, String checkout,int occ){
  		ArrayList<String> resultingRes = new ArrayList<>();
+ 		ArrayList<String> resultingRoomNames = new ArrayList<>();
 
+ 		
 		//Avail rooms on dates
  		String query = "select distinct RoomName from lab7_reservations res join lab7_rooms r on \n" + 
  				"    res.Room = r.RoomCode" +
@@ -367,11 +367,14 @@ public class Database {
  			ResultSet r = prep.executeQuery();
  			while(r.next()) {
  				resultingRes.add(r.getString("RoomName"));
+ 				
  			} 	 			
  		} catch (SQLException e) {
  			System.out.println(e);
  		}	
- 		
+ 		for(String x : resultingRes)
+ 			resultingRoomNames.add(x);
+ 			
  		//Avail rooms on similar dates
  		ArrayList<String> simCheckin = new ArrayList<>();
  		ArrayList<String> simCheckout = new ArrayList<>();
@@ -379,37 +382,41 @@ public class Database {
  		simCheckout.add(checkout);
  		LocalDate arrival = LocalDate.parse(checkin);
  		LocalDate departure = LocalDate.parse(checkout);
-
-		LocalDate add = arrival.plusDays(Long.valueOf(1));
-		LocalDate sub = arrival.minusDays(Long.valueOf(1));
-		simCheckin.add(add.toString());
-		simCheckout.add(sub.toString());
-		
-		LocalDate add1 = departure.plusDays(Long.valueOf(1));
-		LocalDate sub1 = departure.minusDays(Long.valueOf(1));
-		simCheckout.add(add1.toString());
-		simCheckout.add(sub1.toString());
-		
- 		for(int i = 0; i < simCheckin.size(); i++) {
- 			for(int j = 0; j < simCheckout.size(); j++) {
- 		 		try (PreparedStatement prep = con.prepareStatement(query)){
- 		 			if(LocalDate.parse(simCheckout.get(j)).compareTo(LocalDate.parse(simCheckin.get(i)))<= 0) {
- 		 				continue;
- 		 			}
- 		 			prep.setString(1, simCheckin.get(i));
- 		 			prep.setString(2, simCheckout.get(j));
- 		 			prep.setInt(3, occ);
- 		 			ResultSet r = prep.executeQuery();
- 		 			while(r.next()) {
- 		 				String name = r.getString("RoomName");
- 		 				if((!resultingRes.contains(name)) &&
- 		 						(!resultingRes.contains(name + "~*~" + simCheckin.get(i) + "~*~" + simCheckout.get(j))))
- 		 					resultingRes.add(r.getString("RoomName") + "~*~" + simCheckin.get(i) + "~*~" + simCheckout.get(j));
- 		 			} 	 			
- 		 		} catch (SQLException e) {
- 		 			System.out.println(e);
- 		 		}
- 			}
+ 		int addSub = 1;
+ 		while(resultingRes.size() < 5) {
+			LocalDate add = arrival.plusDays(Long.valueOf(addSub));
+			LocalDate sub = arrival.minusDays(Long.valueOf(addSub));
+			simCheckin.add(add.toString());
+			simCheckout.add(sub.toString());
+			
+			LocalDate add1 = departure.plusDays(Long.valueOf(addSub));
+			LocalDate sub1 = departure.minusDays(Long.valueOf(addSub));
+			simCheckout.add(add1.toString());
+			simCheckout.add(sub1.toString());
+			addSub+=1;
+			
+	 		for(int i = 0; i < simCheckin.size(); i++) {
+	 			for(int j = 0; j < simCheckout.size(); j++) {
+	 		 		try (PreparedStatement prep = con.prepareStatement(query)){
+	 		 			if(LocalDate.parse(simCheckout.get(j)).compareTo(LocalDate.parse(simCheckin.get(i)))<= 0) {
+	 		 				continue;
+	 		 			}
+	 		 			prep.setString(1, simCheckin.get(i));
+	 		 			prep.setString(2, simCheckout.get(j));
+	 		 			prep.setInt(3, occ);
+	 		 			ResultSet r = prep.executeQuery();
+	 		 			while(r.next()) {
+	 		 				String name = r.getString("RoomName");
+	 		 				if((!resultingRoomNames.contains(name))) {
+	 		 					resultingRes.add(r.getString("RoomName") + "~*~" + simCheckin.get(i) + "~*~" + simCheckout.get(j));
+	 		 					resultingRoomNames.add(name);
+	 		 				}
+	 		 			} 	 			
+	 		 		} catch (SQLException e) {
+	 		 			System.out.println(e);
+	 		 		}
+	 			}
+	 		}
  		}
  		return resultingRes;
  	}
@@ -431,7 +438,7 @@ public class Database {
  				"    ) " +
  				"    and maxOcc >= ?";
  		
- 		if(!code.equalsIgnoreCase("any")) {
+ 		if(!code.equalsIgnoreCase("any") && (code.length() > 0)) {
  			query += " AND res.room= ?";
  			c = true;
  		}
@@ -506,7 +513,6 @@ public class Database {
  		} catch (SQLException e) {
  			System.out.println(e);
  		}
- 		System.out.println("THE CHECKIN DAY: " + checkin);
  		String dayQuery = "SELECT BusinessDays\n" + 
  				", (TIMESTAMPDIFF(DAY, ?, ?))\n" + 
  				"    - BusinessDays\n" + 
@@ -529,7 +535,6 @@ public class Database {
  			prep2.setString(6, checkout);
  			prep2.setString(7, checkin);
  			prep2.setString(8, checkout);
- 			System.out.println(prep2);
  			ResultSet res2 = prep2.executeQuery();
  			if(res2.next()) {
  				weekDays = res2.getInt("BusinessDays");
@@ -543,14 +548,8 @@ public class Database {
  		cost = (rate * weekDays);
  		//Number of weekend days multiplied by 110% of the room base rate
  		double oneTenPerc = (rate * 1.10);
- 		System.out.println("110% of rate " + rate + " = " + rate*1.10);
- 		
  		cost += (weekends * oneTenPerc);
- 		System.out.println("COST AFTER ADDING WEEKEND COST: " + cost);
- 		
  		//An 18% tourism tax applied to the total of the above two calculations
- 		System.out.println("cost: " + cost + " * .18) " +  " = " + cost+(cost*.18));
-
  		cost = cost+(cost*.18);
  		return cost;
  	}
@@ -699,7 +698,7 @@ public class Database {
  			String[] splitDates = dates.split(",");
  			for(String d : splitDates) {
  	 			String datesQuery = base;
- 				datesQuery += "? BETWEEN checkin and checkout";
+ 				datesQuery += " ? BETWEEN res.CheckIn and res.CheckOut";
 	 	 		try (PreparedStatement prep3 = con.prepareStatement(datesQuery)){
 	 	 			prep3.setString(1, d);
 	 	 			ResultSet r3 = prep3.executeQuery();
