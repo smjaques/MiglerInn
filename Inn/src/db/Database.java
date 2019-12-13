@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.io.BufferedReader;
@@ -39,11 +40,60 @@ public class Database {
  	}
  	
  	
+ 	//restartDB()
+ 	public void restartDB() {
+ 		String delete = "DELETE FROM lab7_rooms";
+ 		String delete2 = "DELETE FROM lab7_reservations";
+ 		String create = "CREATE TABLE IF NOT EXISTS lab7_rooms (\n" + 
+ 				"  RoomCode char(5) PRIMARY KEY,\n" + 
+ 				"  RoomName varchar(30) NOT NULL,\n" + 
+ 				"  Beds int(11) NOT NULL,\n" + 
+ 				"  bedType varchar(8) NOT NULL,\n" + 
+ 				"  maxOcc int(11) NOT NULL,\n" + 
+ 				"  basePrice DECIMAL(6,2) NOT NULL,\n" + 
+ 				"  decor varchar(20) NOT NULL,\n" + 
+ 				"  UNIQUE (RoomName)\n" + 
+ 				");";
+ 		String create2 = "CREATE TABLE IF NOT EXISTS lab7_reservations (\n" + 
+ 				"  CODE int(11) PRIMARY KEY,\n" + 
+ 				"  Room char(5) NOT NULL,\n" + 
+ 				"  CheckIn date NOT NULL,\n" + 
+ 				"  Checkout date NOT NULL,\n" + 
+ 				"  Rate DECIMAL(6,2) NOT NULL,\n" + 
+ 				"  LastName varchar(15) NOT NULL,\n" + 
+ 				"  FirstName varchar(15) NOT NULL,\n" + 
+ 				"  Adults int(11) NOT NULL,\n" + 
+ 				"  Kids int(11) NOT NULL,\n" + 
+ 				"  UNIQUE (Room, CheckIn),\n" + 
+ 				"  UNIQUE (Room, Checkout),\n" + 
+ 				"  FOREIGN KEY (Room) REFERENCES lab7_rooms (RoomCode)\n" + 
+ 				");";
+ 		String insert = " INSERT INTO lab7_rooms SELECT * FROM INN.rooms;";
+ 		
+ 		String insert2 = "INSERT INTO lab7_reservations SELECT CODE, Room,\n" + 
+ 				"   DATE_ADD(CheckIn, INTERVAL 9 YEAR),\n" + 
+ 				"   DATE_ADD(Checkout, INTERVAL 9 YEAR),\n" + 
+ 				"   Rate, LastName, FirstName, Adults, Kids FROM INN.reservations;";
+ 		
+ 		try(Statement state = con.createStatement()){
+ 			state.executeUpdate(delete2);
+ 			state.executeUpdate(delete);
+ 			state.executeUpdate(create);
+ 			state.executeUpdate(create2);
+ 			state.executeUpdate(insert);
+ 			state.executeUpdate(insert2);
+ 		} catch (SQLException e) {
+ 			System.out.println(e);
+ 		}
+ 	}
+ 	
+ 	
+ 	
  	//get all reservations today
  	public String getTodayRes() {
         String sql = "SELECT FirstName, LastName,Room\n" + 
-        		" FROM Reservations WHERE CheckIn <= date(now()) AND Checkout > date(now())";
-        
+        		" FROM lab7_reservations WHERE CheckIn <= date(now()) AND Checkout > date(now())";
+        System.out.println(sql);
         String result = "\t\tFirst Name\t\tLastName\t\tRoomCode\n\n";
         try {
             Statement stmt = con.createStatement();
@@ -57,9 +107,8 @@ public class Database {
         } catch (Exception e) {
             return "";
         }
-
+        System.out.println(result);
         return result;
- 		//return in a way where we can display in label with javafx?
  	}
 
     //see rooms ordered by popularity
@@ -200,7 +249,7 @@ public class Database {
  	//getMaxOcc()					 :  returns max Occupancy for rooms
  	public int getMaxOcc() {
  		int max=4;
- 		String query = "SELECT MAX(MaxOccupancy) as occupancy FROM Rooms as occupancy";
+ 		String query = "SELECT MAX(maxOcc) as occupancy FROM lab7_rooms as occupancy";
  		
         try (Statement state = con.createStatement();
              ResultSet res = state.executeQuery(query)) {
@@ -221,8 +270,8 @@ public class Database {
 	public boolean addNewReservation(String fname, String lname, String RoomCode, String checkin, 
 	 									String checkout, int adults, int kids) {
 		int rate;		
-		int code;							
-		String query = "Select BasePrice FROM Rooms where RoomId = ?";
+		int code;
+		String query = "Select BasePrice FROM lab7_rooms where RoomCode = ?";
 		try(PreparedStatement prep = con.prepareStatement(query)) {
 			prep.setString(1, RoomCode);			
 			// get room rate
@@ -231,15 +280,13 @@ public class Database {
 				rate = res.getInt("BasePrice");
 				
 				// get max reservation code and increment by 1
-				String getCode = "Select max(Code) code from Reservations";
+				String getCode = "Select max(Code) code from lab7_reservations";
 				try(PreparedStatement prep1 = con.prepareStatement(getCode)) {
 					ResultSet res2 = prep1.executeQuery();
 					if (res2.next()) {
 						code = res2.getInt("code") + 1;
-						
-
 						// insert new reservation
-						String addReservation = "INSERT INTO Reservations (Code, Room, CheckIn, CheckOut, Rate, LastName, FirstName, Adults, Kids)" +
+						String addReservation = "INSERT INTO lab7_reservations (Code, Room, CheckIn, CheckOut, Rate, LastName, FirstName, Adults, Kids)" +
 									"Values (?, ?, ?, ?, ?, ?, ?, ?, ?)";	
 						try(PreparedStatement prep2 = con.prepareStatement(addReservation)) {
 							prep2.setInt(1, code);
@@ -274,22 +321,16 @@ public class Database {
  	//Parameters: roomCode, checkin, checkout, ResCode
  	public boolean checkUpdateValid(String RoomCode, String checkin, String checkout, int ResCode) {
 		// check for date conflict
-		String query = "Select * from Reservations res where \n" + 
+		String query = "Select * from lab7_reservations res where \n" + 
 				" 	res.Room=? and\n" + 
 				" 	res.Code != ? and \n" + 
-				" 	(? between Checkin and Checkout)\n" + 
-				" 	OR \n" + 
-				" 	(? between Checkin and Checkout)";
-		
-		try(PreparedStatement prep = con.prepareStatement(query);
-			ResultSet res = prep.executeQuery(query)){
+				" 	Checkin <= ? AND CheckOut > ?";
+		try(PreparedStatement prep = con.prepareStatement(query)){
 			prep.setString(1, RoomCode);
 			prep.setInt(2, ResCode);
 			prep.setString(3, checkin);
 			prep.setString(4, checkout);
-			System.out.println(prep);
-			prep.executeUpdate();
-
+			ResultSet res = prep.executeQuery();
 			if(res.next() == false) {
 				return true;
 			}
@@ -310,15 +351,15 @@ public class Database {
  		ArrayList<String> resultingRes = new ArrayList<>();
 
 		//Avail rooms on dates
- 		String query = "select distinct RoomName from Reservations res join Rooms r on \n" + 
- 				"    res.Room = r.roomid" +
+ 		String query = "select distinct RoomName from lab7_reservations res join lab7_rooms r on \n" + 
+ 				"    res.Room = r.RoomCode" +
  				"	where Room not in \n" + 
  				"    (\n" + 
- 				"    select Room from Reservations where ? \n" +
+ 				"    select Room from lab7_reservations where ? \n" +
  				"         between Checkin and Checkout OR ? \n" +
  				"         between Checkin and Checkout\n" + 
  				"    ) " +
- 				"    and MaxOccupancy >= ?";
+ 				"    and maxOcc >= ?";
  		try (PreparedStatement prep = con.prepareStatement(query)){
  			prep.setString(1, checkin);
  			prep.setString(2, checkout);
@@ -331,9 +372,45 @@ public class Database {
  			System.out.println(e);
  		}	
  		
- 		
  		//Avail rooms on similar dates
- 		
+ 		ArrayList<String> simCheckin = new ArrayList<>();
+ 		ArrayList<String> simCheckout = new ArrayList<>();
+ 		simCheckin.add(checkin);
+ 		simCheckout.add(checkout);
+ 		LocalDate arrival = LocalDate.parse(checkin);
+ 		LocalDate departure = LocalDate.parse(checkout);
+
+		LocalDate add = arrival.plusDays(Long.valueOf(1));
+		LocalDate sub = arrival.minusDays(Long.valueOf(1));
+		simCheckin.add(add.toString());
+		simCheckout.add(sub.toString());
+		
+		LocalDate add1 = departure.plusDays(Long.valueOf(1));
+		LocalDate sub1 = departure.minusDays(Long.valueOf(1));
+		simCheckout.add(add1.toString());
+		simCheckout.add(sub1.toString());
+		
+ 		for(int i = 0; i < simCheckin.size(); i++) {
+ 			for(int j = 0; j < simCheckout.size(); j++) {
+ 		 		try (PreparedStatement prep = con.prepareStatement(query)){
+ 		 			if(LocalDate.parse(simCheckout.get(j)).compareTo(LocalDate.parse(simCheckin.get(i)))<= 0) {
+ 		 				continue;
+ 		 			}
+ 		 			prep.setString(1, simCheckin.get(i));
+ 		 			prep.setString(2, simCheckout.get(j));
+ 		 			prep.setInt(3, occ);
+ 		 			ResultSet r = prep.executeQuery();
+ 		 			while(r.next()) {
+ 		 				String name = r.getString("RoomName");
+ 		 				if((!resultingRes.contains(name)) &&
+ 		 						(!resultingRes.contains(name + "~*~" + simCheckin.get(i) + "~*~" + simCheckout.get(j))))
+ 		 					resultingRes.add(r.getString("RoomName") + "~*~" + simCheckin.get(i) + "~*~" + simCheckout.get(j));
+ 		 			} 	 			
+ 		 		} catch (SQLException e) {
+ 		 			System.out.println(e);
+ 		 		}
+ 			}
+ 		}
  		return resultingRes;
  	}
  	
@@ -344,15 +421,15 @@ public class Database {
  		//returns int of number of rooms found, if none found, call another to get 5 suggestions
  		ArrayList<String> finalResult = new ArrayList<>();
  		boolean c = false;
- 		String query = "select distinct RoomName from Reservations res join Rooms r on \n" + 
- 				"    res.Room = r.roomid" +
+ 		String query = "select distinct RoomName from lab7_reservations res join lab7_rooms r on \n" + 
+ 				"    res.Room = r.RoomCode" +
  				"	where Room not in \n" + 
  				"    (\n" + 
- 				"    select Room from Reservations where ? \n" +
+ 				"    select Room from lab7_reservations where ? \n" +
  				"         between Checkin and Checkout OR ? \n" +
  				"         between Checkin and Checkout\n" + 
  				"    ) " +
- 				"    and MaxOccupancy >= ?";
+ 				"    and maxOcc >= ?";
  		
  		if(!code.equalsIgnoreCase("any")) {
  			query += " AND res.room= ?";
@@ -384,13 +461,13 @@ public class Database {
  	//getRoomCode()					 : gets room code
  	//Parameters: roomname
  	public String getRoomCode(String name) {
- 		String query = "select roomid from Rooms\n" + 
+ 		String query = "select RoomCode from lab7_rooms\n" + 
  				"where roomname=?";
  		try(PreparedStatement prep = con.prepareStatement(query)){
  			prep.setString(1, name);
  			try(ResultSet res = prep.executeQuery()){
  				if(res.next())
- 					return res.getString("roomid");
+ 					return res.getString("RoomCode");
  			}
  		} catch (SQLException e) {
  			System.out.println(e);
@@ -402,14 +479,13 @@ public class Database {
  	//getBedType()					 : gets bed type from roomname
  	//Parameters: roomname
  	public String getBedType(String name) {
- 		String query = "select bedtype from Rooms\n" + 
+ 		String query = "select bedtype from lab7_rooms\n" + 
  				"where roomname=?";
  		try(PreparedStatement prep = con.prepareStatement(query)){
  			prep.setString(1, name);
- 			try(ResultSet res = prep.executeQuery()){
- 				if(res.next())
- 					return res.getString("bedtype");
- 			}
+ 			ResultSet res = prep.executeQuery();
+ 			if(res.next())
+ 				return res.getString("bedtype");
  		} catch (SQLException e) {
  			System.out.println(e);
  		}
@@ -419,17 +495,71 @@ public class Database {
  	//getTotalCost()				 :  gets total cost of reservation
  	//Parameters: roomCode, checkin, checkout 
  	public double getTotalCost(String code, String checkin,String checkout) {
+ 		String rateQuery = "select BasePrice from Rooms where RoomId=?";
+ 		int rate = 0;
+ 		double cost = 0;
+ 		try (PreparedStatement prep = con.prepareStatement(rateQuery)){
+ 			prep.setString(1, code);
+ 			ResultSet res = prep.executeQuery();
+ 			if(res.next())
+ 				rate = res.getInt("BasePrice");
+ 		} catch (SQLException e) {
+ 			System.out.println(e);
+ 		}
+ 		System.out.println("THE CHECKIN DAY: " + checkin);
+ 		String dayQuery = "SELECT BusinessDays\n" + 
+ 				", (TIMESTAMPDIFF(DAY, ?, ?))\n" + 
+ 				"    - BusinessDays\n" + 
+ 				"    As WeekendDays\n" + 
+ 				"FROM (\n" + 
+ 				"    SELECT (TIMESTAMPDIFF(DAY, ?, ?))\n" + 
+ 				"        - (TIMESTAMPDIFF(WEEK, ?, ?) * 2)\n" + 
+ 				"        - (CASE WHEN DAYOFWEEK(?) = 1 THEN 1 ELSE 0 END)\n" + 
+ 				"        - (CASE WHEN DAYOFWEEK(?) = 1 THEN 1 ELSE 0 END) \n" + 
+ 				"        As BusinessDays\n" + 
+ 				") a";
+ 		int weekDays = 0;
+ 		int weekends = 0;
+ 		try (PreparedStatement prep2 = con.prepareStatement(dayQuery)){
+ 			prep2.setString(1, checkin);
+ 			prep2.setString(2, checkout);
+ 			prep2.setString(3, checkin);
+ 			prep2.setString(4, checkout);
+ 			prep2.setString(5, checkin);
+ 			prep2.setString(6, checkout);
+ 			prep2.setString(7, checkin);
+ 			prep2.setString(8, checkout);
+ 			System.out.println(prep2);
+ 			ResultSet res2 = prep2.executeQuery();
+ 			if(res2.next()) {
+ 				weekDays = res2.getInt("BusinessDays");
+ 				weekends = res2.getInt("WeekendDays");
+ 			}
+ 			
+ 		} catch (SQLException e) {
+ 			System.out.println(e);
+ 		}
  		//Number of weekdays multipled by room base rate
+ 		cost = (rate * weekDays);
  		//Number of weekend days multiplied by 110% of the room base rate
+ 		double oneTenPerc = (rate * 1.10);
+ 		System.out.println("110% of rate " + rate + " = " + rate*1.10);
+ 		
+ 		cost += (weekends * oneTenPerc);
+ 		System.out.println("COST AFTER ADDING WEEKEND COST: " + cost);
+ 		
  		//An 18% tourism tax applied to the total of the above two calculations
- 		return 1.0;
+ 		System.out.println("cost: " + cost + " * .18) " +  " = " + cost+(cost*.18));
+
+ 		cost = cost+(cost*.18);
+ 		return cost;
  	}
 
  	
  	//deleteReservation()			 :	deletes reservation
  	//Parameters: reservation code
  	public void deleteRes(int rCode){
- 		try (PreparedStatement prep = con.prepareStatement("DELETE FROM Reservations WHERE Code=?")){
+ 		try (PreparedStatement prep = con.prepareStatement("DELETE FROM lab7_reservations WHERE Code=?")){
  			prep.setInt(1, rCode);
  			prep.executeUpdate();
  		} catch (SQLException e) {
@@ -441,7 +571,7 @@ public class Database {
  	//searchRes()			 :  searches for reservation, T if valid, else F
  	//Parameters: reservation code
  	public boolean searchRes(int Code) throws SQLException {
- 		String query = "SELECT LastName FROM Reservations where Code = ? ";
+ 		String query = "SELECT LastName FROM lab7_reservations where Code = ? ";
 
         try (PreparedStatement prep = con.prepareStatement(query)) {
             prep.setInt(1, Code);
@@ -458,27 +588,35 @@ public class Database {
  	}
 
 
-	public static void updateRes(Integer code, String colName, String value) {
-		String Updatequery = "Update reservations set ? = ? where Code =  ?";
-		try(PreparedStatement pstmt = con.prepareStatement(Updatequery)){
-			pstmt.setInt(1, code);
-			pstmt.setString(2, colName);
-			if (colName == "Adults"){
-				int num = Integer.parseInt(value);
-				pstmt.setInt(3, num);
-			} else{
-				pstmt.setString(3, value);
-			}
-			int rowCount = pstmt.executeUpdate();
-			System.out.format("Updated %d records for %s reservations%n", rowCount, code);
-			} catch (SQLException e) {
-				System.out.println(e);
-			}
+	public void updateRes(Integer resCode, String fName, String lName, 
+			String checkin, String checkout, int adults, int kids) {
+		String updateQuery = "UPDATE lab7_reservations SET FirstName=? ,"
+				+ "LastName=?, "
+				+ "CheckIn=?, "
+				+ "Checkout=?, "
+				+ "Adults=?, "
+				+ "Kids=? "
+				+ "WHERE Code=?";
+ 		try (PreparedStatement prep = con.prepareStatement(updateQuery)){
+ 			prep.setString(1, fName);
+ 			prep.setString(2, lName);
+ 			prep.setString(3, checkin);
+ 			prep.setString(4, checkout);
+ 			prep.setInt(5, adults);
+ 			prep.setInt(6, kids);
+ 			prep.setInt(7, resCode);
+ 			prep.executeUpdate();
+
+ 		} catch (SQLException e) {
+            System.out.println(e);
+        } 
+
+
 	}
  	//getReservation()       :  gets Reservation by resCode
  	//Parameters: resCode
  	public LinkedHashMap<String, String> getReservation(int code){
- 		String query = "Select * from Reservations res join Rooms r on res.Room=r.RoomId where Code = ?";
+ 		String query = "Select * from lab7_reservations res join lab7_rooms r on res.Room=r.RoomCode where Code = ?";
  		LinkedHashMap <String, String> resInfo = new LinkedHashMap<>();
  		try (PreparedStatement prep = con.prepareStatement(query)){
  			prep.setInt(1, code);
@@ -521,8 +659,8 @@ public class Database {
  	//Parameters: firstname, lastname, list of dates, roomcode, rescode
  	public ArrayList<String> resLookup(String fName, String lName, String dates, String roomCode, String resCode){
  		ArrayList<String> resultingRes = new ArrayList<String>();
- 		String base = "SELECT * From Reservations res join Rooms r on"
- 				+ " res.Room=r.RoomId where ";
+ 		String base = "SELECT * From lab7_reservations res join lab7_rooms r on"
+ 				+ " res.Room=r.RoomCode where ";
  		
  		//fName
  		if(fName.length() != 0) {

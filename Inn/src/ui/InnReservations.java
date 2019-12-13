@@ -37,8 +37,7 @@ public class InnReservations extends Application{
 	
 	
 	//starting screen after login, main menu
-	public void mainMenu(Stage primaryStage){	
-		
+	public void mainMenu(Stage primaryStage){
 		GridPane screen = new GridPane();
 		
 		Pane left = new Pane();
@@ -49,15 +48,16 @@ public class InnReservations extends Application{
 		right.setPrefSize(400, 500);
 		
 		//display reservations for today on right pane
-		Text today = new Text(40,50, "Today's Reservations");
+		Text today = new Text(70,130, "Please Select an \n\nOption From the \n\nMenu to the Left.");
 		today.setFill(Color.DARKOLIVEGREEN);
-		today.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 32.0));
+		today.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 35.0));
 		
-        String res = DB.getTodayRes();
-        Label curRes = new Label(res);
-        curRes.setFont(Font.font(String.valueOf(java.awt.Font.SERIF)));
-        curRes.setLayoutY(70);
-		right.getChildren().addAll(curRes,today);
+//        String res = DB.getTodayRes();
+//        System.out.println(res);
+//        Label curRes = new Label(res);
+//        curRes.setFont(Font.font(String.valueOf(java.awt.Font.SERIF)));
+//        curRes.setLayoutY(70);
+		right.getChildren().addAll(today);
 		
 		SplitPane split = new SplitPane();
 		split.getItems().setAll(left,right);
@@ -187,7 +187,6 @@ public class InnReservations extends Application{
 								updateRes(primaryStage, left, right, rCode);
 							}
 						} catch (SQLException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}					
@@ -243,13 +242,12 @@ public class InnReservations extends Application{
 								DB.deleteRes(rCode);
 								Text deleted = new Text(20, 200,"Successfully deleted Reservation " + rCode);
 								deleted.setFill(Color.DARKOLIVEGREEN);
-								deleted.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 18.0));
+								deleted.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 19.0));
 								right.getChildren().clear();
 								right.getChildren().add(deleted);
 								
-							}
+							} 
 						} catch (SQLException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}					
@@ -290,8 +288,6 @@ public class InnReservations extends Application{
 			public void handle(ActionEvent event) {
                 ArrayList<String> rev = DB.getRev();
                 showRev(primaryStage, right, rev);
-				//stay on same page and display rooms on right
-				//call to db dislay list of rooms
 			}
 		});
 		
@@ -455,6 +451,9 @@ public class InnReservations extends Application{
 				if((Integer.parseInt(adults)+Integer.parseInt(kids)) > DB.getMaxOcc()) {
 					valid = false;
 				}
+				if(departure.getValue().compareTo(arrival.getValue()) < 0) {
+					valid=false;
+				}
 				if(!valid) {
 					//"Error: can't make Reservation"
 					Text resMsg = new Text(20, 60, "Error: Unable to Make Reservation");
@@ -473,36 +472,114 @@ public class InnReservations extends Application{
 				} else {
 					ArrayList<String> res = DB.getAvailRooms(code, bed, checkinFormat,
 							checkoutFormat, Integer.parseInt(adults)+Integer.parseInt(kids));
+					ArrayList<String> buttons = new ArrayList<>();
+					//Suggested Rooms
 					if(res.size() == 0) {
+						Text resMsg = new Text(60, 60, "   No perfect matches.\nGetting Suggested Rooms.");
+						resMsg.setFill(Color.WHITE);
+						resMsg.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 20.0));
+						resMsg.setLayoutX(20);
+						resMsg.setLayoutY(270);
+						left.getChildren().add(resMsg);
 						res = DB.getSuggestedRooms(code, bed,
 								checkinFormat, checkoutFormat, Integer.parseInt(adults)+Integer.parseInt(kids));
-						//set new dates?
-					}
-					for(String r : res) {
-						Button option = new Button(r);
-						option.setLayoutY(Y);
-						option.setMaxWidth(400);
-						option.setMinWidth(400);
-						String optionIdle = "-fx-background-color: darkolivegreen; -fx-text-fill: white";
-						String optionHover = "-fx-background-color: darkgrey; -fx-text-fill: white";
-						option.setStyle(optionIdle);
-						option.setOnMouseEntered(e -> option.setStyle(optionHover));
-						option.setOnMouseExited(e -> option.setStyle(optionIdle));
-						Y += 30;
-						right.getChildren().add(option);
 						
-						//set event where if clicked, sends info to confirmation page!
-						option.setOnAction(new EventHandler<ActionEvent>() {
-							
-							@Override
-							public void handle(ActionEvent event) {
-								String picked = option.getText();
-								String resCode = DB.getRoomCode(picked);
-								String bedType = DB.getBedType(picked);
-								//DB.getTotalCost(Integer.parseInt(code), checkin,checkout);
-								confirmationPage(primaryStage,fname,lname,resCode,bedType,checkinFormat,checkoutFormat,adults,kids,picked);
+						for(String r : res) {
+							if(r.contains("*")) {
+								String[] split = r.split("~*~");
+								r = split[0];
+								String checkIn = split[2];
+								String checkOut = split[4];
+								if(buttons.contains(r))
+									continue;
+								Button option = new Button(r);
+								buttons.add(r);
+								option.setLayoutY(Y);
+								option.setMaxWidth(400);
+								option.setMinWidth(400);
+								String optionIdle = "-fx-background-color: darkolivegreen; -fx-text-fill: white";
+								String optionHover = "-fx-background-color: darkgrey; -fx-text-fill: white";
+								option.setStyle(optionIdle);
+								option.setOnMouseEntered(e -> option.setStyle(optionHover));
+								option.setOnMouseExited(e -> option.setStyle(optionIdle));
+								Y += 30;
+								right.getChildren().add(option);
+								
+								//set event where if clicked, sends info to confirmation page!
+								option.setOnAction(new EventHandler<ActionEvent>() {
+									
+									@Override
+									public void handle(ActionEvent event) {
+										String picked = option.getText();
+										String resCode = DB.getRoomCode(picked);
+										String bedType = DB.getBedType(picked);
+										//DB.getTotalCost(Integer.parseInt(code), checkin,checkout);
+										confirmationPage(primaryStage,fname,lname,resCode,bedType,
+												checkIn,checkOut,adults,kids,picked);
+									}
+								});
+							} else {
+								Button option = new Button(r);
+								option.setLayoutY(Y);
+								option.setMaxWidth(400);
+								option.setMinWidth(400);
+								String optionIdle = "-fx-background-color: darkolivegreen; -fx-text-fill: white";
+								String optionHover = "-fx-background-color: darkgrey; -fx-text-fill: white";
+								option.setStyle(optionIdle);
+								option.setOnMouseEntered(e -> option.setStyle(optionHover));
+								option.setOnMouseExited(e -> option.setStyle(optionIdle));
+								Y += 30;
+								right.getChildren().add(option);
+								String checkIn = arrival.getValue().toString();
+								String checkOut = departure.getValue().toString();
+								//set event where if clicked, sends info to confirmation page!
+								option.setOnAction(new EventHandler<ActionEvent>() {
+									
+									@Override
+									public void handle(ActionEvent event) {
+										String picked = option.getText();
+										String resCode = DB.getRoomCode(picked);
+										String bedType = DB.getBedType(picked);
+										//DB.getTotalCost(Integer.parseInt(code), checkin,checkout);
+										confirmationPage(primaryStage,fname,lname,resCode,bedType,
+												checkIn,checkOut,adults,kids,picked);
+									}
+								});
 							}
-						});
+							
+						}
+					} 
+					
+					//Not Suggested Rooms
+					else {
+						for(String r : res) {
+							Button option = new Button(r);
+							option.setLayoutY(Y);
+							option.setMaxWidth(400);
+							option.setMinWidth(400);
+							String optionIdle = "-fx-background-color: darkolivegreen; -fx-text-fill: white";
+							String optionHover = "-fx-background-color: darkgrey; -fx-text-fill: white";
+							option.setStyle(optionIdle);
+							option.setOnMouseEntered(e -> option.setStyle(optionHover));
+							option.setOnMouseExited(e -> option.setStyle(optionIdle));
+							Y += 30;
+							right.getChildren().add(option);
+							
+							//set event where if clicked, sends info to confirmation page!
+							option.setOnAction(new EventHandler<ActionEvent>() {
+								
+								@Override
+								public void handle(ActionEvent event) {
+									String picked = option.getText();
+									String resCode = DB.getRoomCode(picked);
+									String bedType = DB.getBedType(picked);
+									//DB.getTotalCost(Integer.parseInt(code), checkin,checkout);
+									confirmationPage(primaryStage,fname,lname,resCode,bedType,
+											arrival.getValue().toString(),
+											departure.getValue().toString(),adults,kids,picked);
+								}
+							});
+						}
 					}
 				}
 			}
@@ -521,8 +598,7 @@ public class InnReservations extends Application{
 	public void confirmationPage(Stage primaryStage,String fname,String lname, String code, String bed, 
 			String checkin, String checkout,
 			String adults, String kids, String roomOption) {
-		
-		
+
 		GridPane screen = new GridPane();
 		
 		Pane left = new Pane();
@@ -581,7 +657,8 @@ public class InnReservations extends Application{
 				+ "\n\n	Checkin Date: " + checkin 
 				+ "\n\n	Checkout Date: " + checkout
 				+ "\n\n	Adults: " + adults + "\n\n	Kids: " + kids
-				+ "\n\n	Room: " + roomOption;
+				+ "\n\n	Room: " + roomOption
+				+ "\n\n	Total Cost: " + DB.getTotalCost(roomCode, checkin, checkout);
 		Label confirm = new Label(details);
 		confirm.setStyle("-fx-font: 12 serif; -fx-text-fill: white;");
 		confirm.setLayoutY(80);
@@ -618,7 +695,6 @@ public class InnReservations extends Application{
 			
 			@Override
 			public void handle(ActionEvent event) {
-				
 				if(DB.addNewReservation(fname, lname, roomCode, checkin,
 						checkout, Integer.parseInt(adults), Integer.parseInt(kids))) {
 					Text booked = new Text(70, 200,"Reservation booked!");
@@ -857,7 +933,6 @@ public class InnReservations extends Application{
 				boolean valid = true;
 				valid = DB.checkUpdateValid(resInfo.get("Room"), arrival.getValue().toString(), 
 						departure.getValue().toString(), resCode);
-				System.out.println("Validity: " + valid);
 				
 				//check if new occupancy is valid
 				if(Integer.parseInt(numAdults.getText())+Integer.parseInt(numKids.getText()) > DB.getMaxOcc())
@@ -875,8 +950,12 @@ public class InnReservations extends Application{
 					right.getChildren().addAll(error,again);
 					//Show error and no confirmation page
 				} else {
-					//then confirmation page
-					confirmationPage(primaryStage,fName.getText(),lName.getText(),
+					DB.updateRes(resCode, fName.getText(), lName.getText(), 
+							arrival.getValue().toString(),departure.getValue().toString(),
+							Integer.parseInt(numAdults.getText()), Integer.parseInt(numKids.getText()));
+					//special confirmation page
+					
+					updateConfirmationPage(primaryStage,fName.getText(),lName.getText(),
 							String.valueOf(resCode),resInfo.get("BedType"),arrival.getValue().toString(),departure.getValue().toString(),
 							numAdults.getText(),numKids.getText(),resInfo.get("RoomName"));
 				}
@@ -885,6 +964,106 @@ public class InnReservations extends Application{
 		});
 		left.getChildren().addAll(cancel,fName,lName,arrival,departure,numKids,numAdults,
 				submit,change,room);
+	}
+	
+	//New Reservation Confirmation Page
+	public void updateConfirmationPage(Stage primaryStage,String fname,String lname, String code, String bed, 
+			String checkin, String checkout,
+			String adults, String kids, String roomOption) {
+
+		GridPane screen = new GridPane();
+		
+		Pane left = new Pane();
+		left.setPrefSize(400,500);
+		left.setStyle("-fx-background-color: darkolivegreen");
+		
+		Pane right = new Pane();
+		right.setPrefSize(400, 500);
+		
+		SplitPane split = new SplitPane();
+		split.getItems().setAll(left,right);
+		split.setStyle("-fx-box-border: transparent;");
+		
+		Pane layout = new Pane();
+		layout.getChildren().setAll(split);
+		screen.add(layout, 0, 20);
+
+		Pane root = new Pane();
+		Text welcome = new Text(140, 50, "Welcome to the Migler Inn");
+		
+		welcome.setFill(Color.DARKOLIVEGREEN);
+		welcome.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 40.0));
+		root.getChildren().add(welcome);
+		screen.getChildren().add(root);
+		
+		//logout button
+		Button logout = new Button("Logout");
+		final String HOVERED_BUTTON_STYLE = "-fx-font: 12 cambria; -fx-background-color: darkolivegreen; -fx-text-fill: white;";
+		final String IDLE_BUTTON_STYLE = "-fx-font: 11 cambria; -fx-background-color: darkolivegreen; -fx-text-fill: black;";
+		logout.setStyle("-fx-font: 11 cambria; -fx-background-color: darkolivegreen; -fx-text-fill: black;");
+		logout.setLayoutX(350);
+		logout.setOnMouseEntered(e -> logout.setStyle(HOVERED_BUTTON_STYLE));
+		logout.setOnMouseExited(e -> logout.setStyle(IDLE_BUTTON_STYLE));
+		left.getChildren().add(logout);
+		logout.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				try {
+					DB.dbLogout();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				
+			    System.exit(0);
+			    
+			}
+		});
+		Text resMsg = new Text(80, 60, "Confirmation");
+		resMsg.setFill(Color.WHITE);
+		resMsg.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 35.0));
+		String roomCode = DB.getRoomCode(roomOption);
+		//"Confirmation"
+		String details = "\n	First Name: " + fname + "\n\n	Last Name: " + lname 
+				+ "\n\n	Room Code: " + roomCode + "\n\n	Bed Type: " + bed 
+				+ "\n\n	Checkin Date: " + checkin 
+				+ "\n\n	Checkout Date: " + checkout
+				+ "\n\n	Adults: " + adults + "\n\n	Kids: " + kids
+				+ "\n\n	Room: " + roomOption
+				+ "\n\n	Total Cost: " + DB.getTotalCost(roomCode, checkin, checkout);
+		Label confirm = new Label(details);
+		confirm.setStyle("-fx-font: 12 serif; -fx-text-fill: white;");
+		confirm.setLayoutY(70);
+		confirm.setLayoutX(80);
+		
+		
+		Text booked = new Text(70, 200,"Reservation booked!");
+		booked.setFill(Color.DARKOLIVEGREEN);
+		booked.setFont(Font.font(String.valueOf(java.awt.Font.SERIF), 35.0));
+		right.getChildren().add(booked);
+
+		//back to main menu button
+		Button backToMain = new Button("< Back to Main Menu");
+		backToMain.setMaxHeight(12);
+		final String backHover = "-fx-font: 11 serif; -fx-background-color: darkolivegreen; -fx-text-fill: white;";
+		final String backIdle = "-fx-font: 11 serif; -fx-background-color: darkolivegreen; -fx-text-fill: black";
+		backToMain.setStyle(backIdle);
+		backToMain.setOnMouseEntered(e -> backToMain.setStyle(backHover));
+		backToMain.setOnMouseExited(e -> backToMain.setStyle(backIdle));
+		backToMain.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				mainMenu(primaryStage);
+			}
+		});
+
+		
+		left.getChildren().addAll(confirm,backToMain,resMsg);
+		
+		primaryStage.setScene(new Scene(screen));
+		primaryStage.setTitle("Migler Inn");
+		primaryStage.show();
 	}
 	
 	
